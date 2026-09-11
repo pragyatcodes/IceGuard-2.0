@@ -8,7 +8,7 @@ import { fmt } from "@/lib/utils";
 import { Badge } from "@/components/ui/primitives";
 
 export const metadata: Metadata = {
-  title: "Replay & skill",
+  title: "Replay & validation",
   description:
     "ICEGUARD replay harness: geodesic MAE in kilometres for physics-only vs physics+residual, a per-season split, and the conformal calibration curve.",
 };
@@ -43,7 +43,7 @@ export default function SkillPage() {
           >
             <ArrowLeft size={13} /> ICEGUARD
           </Link>
-          <span className="text-sm font-semibold text-frost-50">Replay &amp; skill</span>
+          <span className="text-sm font-semibold text-frost-50">Replay &amp; validation</span>
           <Link
             href="/console"
             className="ml-auto rounded-lg bg-glacier-500 px-3 py-1.5 text-xs font-semibold text-abyss-950 hover:bg-glacier-400"
@@ -208,7 +208,7 @@ export default function SkillPage() {
           <h2 className="text-sm font-semibold text-frost-50">Seasonal split (L12)</h2>
           <p className="mt-1 max-w-2xl text-[11px] text-frost-500">
             A model trained on summer and used in freeze-up is a different problem. We publish the
-            split rather than claim a single number — and we do not claim winter skill from two
+            split rather than claim a single number — and we do not claim winter accuracy from two
             cases.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-4">
@@ -317,8 +317,8 @@ export default function SkillPage() {
         <p className="mt-8 rounded-xl border border-frost-400/10 bg-abyss-850/40 p-4 text-[11px] leading-relaxed text-frost-400">
           <strong className="text-frost-200">What we still cannot honestly promise:</strong>{" "}
           metre-level berg outlines in a blizzard with no SAR pass; the exact hour a giant berg will
-          calve; a route that is safe without a human lookout; or skill equal to a national ice
-          service on day one. We show replay skill, not a fake certificate.
+          calve; a route that is safe without a human lookout; or accuracy equal to a national ice
+          service on day one. We show measured replay accuracy, not a fake certificate.
         </p>
       </main>
     </div>

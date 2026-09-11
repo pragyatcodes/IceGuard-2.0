@@ -24,9 +24,12 @@ export interface ViewState {
   edgeLat: number;
   /** Rotate the chart so this longitude points up. */
   centreLon: number;
+  /** Screen-space pan offsets (px) — drag to move on x/y. */
+  dx?: number;
+  dy?: number;
 }
 
-export const DEFAULT_VIEW: ViewState = { edgeLat: -48, centreLon: 40 };
+export const DEFAULT_VIEW: ViewState = { edgeLat: -48, centreLon: 40, dx: 0, dy: 0 };
 
 function rhoOf(lat: number): number {
   return Math.tan(Math.PI / 4 + (lat * RAD) / 2);
@@ -44,7 +47,10 @@ export function project(
   const scale = (Math.min(w, h) / 2) * 0.96 / edge;
   const r = rhoOf(p.lat) * scale;
   const th = (p.lon - view.centreLon) * RAD;
-  return { x: cx + r * Math.sin(th), y: cy - r * Math.cos(th) };
+  return {
+    x: cx + r * Math.sin(th) + (view.dx ?? 0),
+    y: cy - r * Math.cos(th) + (view.dy ?? 0),
+  };
 }
 
 export function unproject(
@@ -58,8 +64,8 @@ export function unproject(
   const cy = h / 2;
   const edge = rhoOf(view.edgeLat);
   const scale = (Math.min(w, h) / 2) * 0.96 / edge;
-  const dx = (x - cx) / scale;
-  const dy = -(y - cy) / scale;
+  const dx = (x - (view.dx ?? 0) - cx) / scale;
+  const dy = -((y - (view.dy ?? 0)) - cy) / scale;
   const r = Math.hypot(dx, dy);
   const lat = (2 * Math.atan(r) - Math.PI / 2) / RAD;
   const lon = (Math.atan2(dx, dy) / RAD + view.centreLon + 540) % 360 - 180;
@@ -239,7 +245,7 @@ function haloText(
 }
 
 export function viewKey(view: ViewState, w: number, h: number): string {
-  return `${view.edgeLat}|${view.centreLon}|${w}|${h}`;
+  return `${view.edgeLat}|${view.centreLon}|${view.dx ?? 0}|${view.dy ?? 0}|${w}|${h}`;
 }
 
 export function drawChart(
@@ -438,20 +444,50 @@ export function drawChart(
   }
 
   // ---- Centre-line tracks ----------------------------------------------
+  // Cased so the track reads on both bright pack and dark ocean; waypoint
+  // dots at 1/3 · 2/3 · end give the eye something to follow.
   if (layers.tracks) {
     for (const t of o.tracks) {
       const color = REGIME_COLOR[t.regime] ?? "#38d3f5";
-      ctx.strokeStyle = hexA(color, 0.95);
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      t.centre.forEach((pt, i) => {
-        const p = project(pt, w, h, view);
-        if (i === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
+      const pts = t.centre.map((pt) => project(pt, w, h, view));
+      if (pts.length < 2) continue;
+
+      const trace = () => {
+        ctx.beginPath();
+        pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      };
+
+      trace();
+      ctx.strokeStyle = "rgba(3, 7, 17, 0.8)";
+      ctx.lineWidth = 4.5;
+      ctx.setLineDash([]);
+      ctx.stroke();
+
+      trace();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([8, 5]);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      for (const f of [1 / 3, 2 / 3]) {
+        const p = pts[Math.floor(pts.length * f)];
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = "#f2f8ff";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(3,7,17,0.9)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+      const end = pts[pts.length - 1];
+      ctx.beginPath();
+      ctx.arc(end.x, end.y, 3.4, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#f2f8ff";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
     }
   }
 

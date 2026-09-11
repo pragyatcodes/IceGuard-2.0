@@ -88,17 +88,14 @@ export default async function LandingPage() {
             <span className="text-sm font-bold tracking-tight text-frost-50">ICEGUARD</span>
           </Link>
           <div className="hidden items-center gap-5 text-xs text-frost-400 md:flex">
-            <a href="#how" className="transition-colors hover:text-frost-100">How it works</a>
-            <a href="#regimes" className="transition-colors hover:text-frost-100">Three regimes</a>
-            <a href="#skill" className="transition-colors hover:text-frost-100">Skill</a>
-            <a href="#loopholes" className="transition-colors hover:text-frost-100">Loopholes</a>
+            <a href="#about" className="transition-colors hover:text-frost-100">About us</a>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/skill"
               className="rounded-lg px-3 py-1.5 text-xs font-medium text-frost-300 transition-colors hover:text-frost-50"
             >
-              Replay &amp; skill
+              Replay &amp; validation
             </Link>
             <Link href="/console" className="shiny-cta shiny-sm">
               <span>
@@ -121,11 +118,10 @@ export default async function LandingPage() {
             </div>
 
             <h1 className="text-balance text-shadow-soft text-4xl font-bold leading-[1.05] tracking-tight text-frost-50 md:text-6xl">
-              Not a pretty map.{" "}
               <span className="bg-gradient-to-r from-glacier-300 via-glacier-400 to-lock-400 bg-clip-text text-transparent">
                 A GO / SLOW / NO-GO
-              </span>{" "}
-              a scientist can audit.
+              </span>
+              <span className="block">navigation system that scientists can audit</span>
             </h1>
 
             <p className="text-shadow-soft mx-auto mt-6 max-w-2xl text-balance text-base font-medium leading-relaxed text-frost-50 md:text-lg">
@@ -244,16 +240,23 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* -------------------------------------------------------- Bento */}
-      <section id="how" className="py-20">
+      {/* -------------------------------------------------- About us */}
+      <section id="about" className="border-y border-frost-400/10 bg-abyss-900/40 py-20">
         <div className="mx-auto max-w-6xl px-5">
           <SectionHead
-            eyebrow="The three jobs"
-            title="Fuse. Predict. Decide."
-            sub="A decision support system, not an autopilot. Every stage is inspectable and every number has a unit you can check."
+            eyebrow="About us"
+            title="How ICEGUARD works — one page, all of it"
+            sub="Everything the four tabs used to cover, kept together so it can be read top to bottom."
           />
 
-          <div className="mt-10 grid gap-4 md:grid-cols-6">
+          <div className="mt-12 space-y-16">
+            <div>
+              <h3 className="text-lg font-bold tracking-tight text-frost-50">How it works</h3>
+              <p className="mb-6 mt-2 max-w-2xl text-sm leading-relaxed text-frost-400">
+                A decision support system, not an autopilot. Every stage is inspectable and every
+                number has a unit you can check.
+              </p>
+              <div className="grid gap-4 md:grid-cols-6">
             <Bento className="md:col-span-4" icon={Satellite} title="Fuse" tone="cyan">
               <p className="text-sm leading-relaxed text-frost-300">
                 Sentinel-1 SAR sees through cloud and polar night — optical cameras cannot, which
@@ -312,14 +315,14 @@ export default async function LandingPage() {
             <Bento className="md:col-span-2" icon={History} title="Replay" tone="amber">
               <p className="text-sm leading-relaxed text-frost-300">
                 Every week the same code runs on last year&apos;s bergs and publishes{" "}
-                <strong className="text-frost-100">geodesic MAE in kilometres</strong>. If skill
+                <strong className="text-frost-100">geodesic MAE in kilometres</strong>. If accuracy
                 dies, we know before a voyage — not after.
               </p>
               <Link
                 href="/skill"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-glacier-300 hover:text-glacier-400"
               >
-                Open the skill table <ArrowRight size={12} />
+                Open the validation table <ArrowRight size={12} />
               </Link>
             </Bento>
 
@@ -333,19 +336,16 @@ export default async function LandingPage() {
                 target 5–20 MB · measured at /api/bundle
               </div>
             </Bento>
-          </div>
-        </div>
-      </section>
+              </div>
+            </div>
 
-      {/* ------------------------------------------------------- Regimes */}
-      <section id="regimes" className="border-y border-frost-400/10 bg-abyss-900/40 py-20">
-        <div className="mx-auto max-w-6xl px-5">
-          <SectionHead
-            eyebrow="Why not just an LSTM"
-            title="A berg inside 90% pack is not a free particle"
-            sub="A sequence model copies yesterday's motion. When the berg enters dense pack the physics changes regime, and a net that never saw that law keeps sliding. So the regimes live in code."
-          />
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <div>
+              <h3 className="text-lg font-bold tracking-tight text-frost-50">Three regimes</h3>
+              <p className="mb-6 mt-2 max-w-2xl text-sm leading-relaxed text-frost-400">
+                A berg inside 90% pack is not a free particle — a sequence model copies
+                yesterday&apos;s motion, so the regimes live in code.
+              </p>
+              <div className="grid gap-4 md:grid-cols-3">
             <RegimeCard
               tone="cyan"
               name="Open water"
@@ -364,19 +364,16 @@ export default async function LandingPage() {
               rule="SIC ≥ 90% and thick"
               body="Dense pack has captured the berg. Its velocity IS the ice velocity. Concentration alone is not enough — thin young ice at 95% is not a cage."
             />
-          </div>
-        </div>
-      </section>
+              </div>
+            </div>
 
-      {/* ---------------------------------------------------------- Skill */}
-      <section id="skill" className="py-20">
-        <div className="mx-auto max-w-6xl px-5">
-          <SectionHead
-            eyebrow="Numbers we will stand behind"
-            title="Measured, not asserted"
-            sub="Every figure below is computed by the running pipeline at request time."
-          />
-          <div className="mt-8 overflow-hidden rounded-2xl border border-frost-400/12">
+            <div>
+              <h3 className="text-lg font-bold tracking-tight text-frost-50">Validation</h3>
+              <p className="mb-6 mt-2 max-w-2xl text-sm leading-relaxed text-frost-400">
+                Measured, not asserted — every figure below is computed by the running pipeline at
+                request time.
+              </p>
+              <div className="overflow-hidden rounded-2xl border border-frost-400/12">
             <table className="w-full text-sm">
               <thead className="bg-abyss-850/80">
                 <tr className="text-left text-[10px] uppercase tracking-wider text-frost-500">
@@ -419,23 +416,20 @@ export default async function LandingPage() {
                 />
               </tbody>
             </table>
-          </div>
-          <p className="mt-3 text-[11px] text-frost-500">
-            Scores are geodesic kilometres, never degrees — near the pole 1° of longitude is not a
-            kilometre (L4).
-          </p>
-        </div>
-      </section>
+              </div>
+              <p className="mt-3 text-[11px] text-frost-500">
+                Scores are geodesic kilometres, never degrees — near the pole 1° of longitude is not
+                a kilometre (L4).
+              </p>
+            </div>
 
-      {/* ------------------------------------------------------ Loopholes */}
-      <section id="loopholes" className="border-t border-frost-400/10 bg-abyss-900/40 py-20">
-        <div className="mx-auto max-w-6xl px-5">
-          <SectionHead
-            eyebrow="Named failure modes"
-            title="How this dies — and what we did about it"
-            sub="A winning idea is not the one with the most arrows. It is the one that names how it fails, then designs around that."
-          />
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <h3 className="text-lg font-bold tracking-tight text-frost-50">Loopholes</h3>
+              <p className="mb-6 mt-2 max-w-2xl text-sm leading-relaxed text-frost-400">
+                How this dies — and what we did about it. A winning idea is not the one with the
+                most arrows; it is the one that names how it fails, then designs around that.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
               { t: "Optical-only demos", f: "SAR-first. Optical is a toggle, never a requirement for GO/NO-GO." },
               { t: "Black-box LSTM", f: "Three-regime physics in code; ML learns only the residual." },
@@ -457,6 +451,8 @@ export default async function LandingPage() {
                 <p className="mt-1.5 text-[11px] leading-snug text-frost-300">{f}</p>
               </div>
             ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -498,7 +494,7 @@ export default async function LandingPage() {
             </div>
             <div className="flex gap-4 text-[11px] text-frost-500">
               <a href="/console" className="hover:text-frost-200">Console</a>
-              <a href="/skill" className="hover:text-frost-200">Skill</a>
+              <a href="/skill" className="hover:text-frost-200">Validation</a>
               <a href="/api/health" className="hover:text-frost-200">Health API</a>
               <a href="/api/bundle" className="hover:text-frost-200">Lite bundle</a>
             </div>

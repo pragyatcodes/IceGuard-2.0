@@ -218,11 +218,25 @@ export function Toggle({
 
 /* ----------------------------------------------------------------- Tooltip */
 
-export function Tip({ text, children }: { text: string; children: React.ReactNode }) {
+export function Tip({
+  text,
+  children,
+  side = "top",
+}: {
+  text: string;
+  children: React.ReactNode;
+  /** "top" pops above the target; "bottom" below (for top-bar items). */
+  side?: "top" | "bottom";
+}) {
   return (
     <span className="group/tip relative inline-flex">
       {children}
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 w-max max-w-[240px] -translate-x-1/2 rounded-lg border border-frost-400/20 bg-abyss-850 px-2.5 py-1.5 text-[11px] leading-snug text-frost-200 opacity-0 shadow-xl transition-opacity group-hover/tip:opacity-100">
+      <span
+        className={cn(
+          "pointer-events-none absolute left-1/2 z-50 w-max max-w-[240px] -translate-x-1/2 rounded-lg border border-frost-400/30 bg-abyss-850 px-2.5 py-1.5 text-[11px] font-semibold leading-snug text-frost-100 opacity-0 shadow-2xl transition-opacity group-hover/tip:opacity-100",
+          side === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5",
+        )}
+      >
         {text}
       </span>
     </span>

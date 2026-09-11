@@ -45,7 +45,7 @@ export function PolarChart({
   const [size, setSize] = React.useState({ w: 800, h: 600 });
   const [view, setView] = React.useState<ViewState>(viewProp ?? DEFAULT_VIEW);
   const iceCache = React.useRef<{ key: string; canvas: HTMLCanvasElement } | null>(null);
-  const drag = React.useRef<{ x: number; y: number; lon: number } | null>(null);
+  const drag = React.useRef<{ x: number; y: number; dx: number; dy: number } | null>(null);
 
   React.useEffect(() => {
     if (viewProp) setView(viewProp);
@@ -113,15 +113,20 @@ export function PolarChart({
         className={onSelectBerg ? "cursor-crosshair" : "cursor-default"}
         onClick={hitTest}
         onMouseDown={(e) => {
-          drag.current = { x: e.clientX, y: e.clientY, lon: view.centreLon };
+          drag.current = {
+            x: e.clientX,
+            y: e.clientY,
+            dx: view.dx ?? 0,
+            dy: view.dy ?? 0,
+          };
         }}
         onMouseMove={(e) => {
           if (!drag.current) return;
-          const dx = e.clientX - drag.current.x;
-          setView((v) => ({
-            ...v,
-            centreLon: ((drag.current!.lon - dx * 0.25 + 540) % 360) - 180,
-          }));
+          // Drag = pan on x/y; rotation stays on the ⟲ ⟳ buttons.
+          const lim = Math.min(size.w, size.h) * 0.9;
+          const ndx = Math.max(-lim, Math.min(lim, drag.current.dx + (e.clientX - drag.current.x)));
+          const ndy = Math.max(-lim, Math.min(lim, drag.current.dy + (e.clientY - drag.current.y)));
+          setView((v) => ({ ...v, dx: ndx, dy: ndy }));
         }}
         onMouseUp={() => (drag.current = null)}
         onMouseLeave={() => (drag.current = null)}

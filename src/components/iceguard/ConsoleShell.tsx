@@ -21,6 +21,8 @@ import {
   Waves,
   Wind,
   X,
+  PanelLeft,
+  PanelRight,
 } from "lucide-react";
 import { Badge, Button, Card, CardHeader, Stat, Tip, Toggle } from "@/components/ui/primitives";
 import { PolarChart } from "@/components/iceguard/PolarChart";
@@ -200,6 +202,9 @@ export function ConsoleShell({
   const [overrideOpen, setOverrideOpen] = React.useState(false);
   const [overrideReason, setOverrideReason] = React.useState("");
   const [overrideLight, setOverrideLight] = React.useState("SLOW");
+  const [verdictCardOpen, setVerdictCardOpen] = React.useState(true);
+  const [leftOpen, setLeftOpen] = React.useState(false);
+  const [rightOpen, setRightOpen] = React.useState(false);
   const [overrideBusy, setOverrideBusy] = React.useState(false);
   const canOverride = user?.role === "OPERATOR" || user?.role === "ADMIN";
 
@@ -391,7 +396,7 @@ export function ConsoleShell({
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-abyss-950/78">
       {/* ------------------------------------------------------- Top bar */}
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-frost-400/12 bg-abyss-900/80 px-4 backdrop-blur">
+      <header className="relative z-40 flex h-14 shrink-0 items-center gap-4 border-b border-frost-400/12 bg-abyss-900/80 px-4 backdrop-blur">
         <a href="/" className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-glacier-500/15 text-glacier-300 ring-1 ring-glacier-500/35">
             <Snowflake className="h-4.5 w-4.5" size={18} />
@@ -409,6 +414,7 @@ export function ConsoleShell({
           {health.feeds.map((f) => (
             <Tip
               key={f.code}
+              side="bottom"
               text={`${f.name} — ${f.note}. Age ${relAge(f.ageH)}.`}
             >
               <span
@@ -442,7 +448,7 @@ export function ConsoleShell({
           </Button>
 
           {user ? (
-            <Tip text={`${user.email} · ${user.role}`}>
+            <Tip side="bottom" text={`${user.email} · ${user.role}`}>
               <span className="hidden items-center gap-1.5 rounded-lg border border-frost-400/15 px-2.5 py-1 text-[10px] md:flex">
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
@@ -474,8 +480,9 @@ export function ConsoleShell({
 
       {/* ---------------------------------------------------------- Body */}
       <div className="flex min-h-0 flex-1">
-        {/* Left rail */}
-        <aside className="flex w-64 shrink-0 flex-col border-r border-frost-400/12 bg-abyss-900/45">
+        {/* Left rail (retractable) */}
+        {leftOpen && (
+        <aside className="flex w-64 shrink-0 flex-col border-r border-white/25 bg-abyss-900/45">
           <div className="border-b border-frost-400/10 p-3">
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-frost-500" />
@@ -547,13 +554,12 @@ export function ConsoleShell({
                 </button>
               );
             })}
-          </div>
-
-          {/* Layer toggles */}
-          <div className="border-t border-frost-400/10 p-2">
-            <div className="mb-1 flex items-center gap-1.5 px-1.5 text-[9px] font-bold uppercase tracking-widest text-frost-500">
-              <Layers className="h-3 w-3" /> Layers
-            </div>
+            {/* Layer toggles — two columns, inside the scrollable rail */}
+            <div className="mt-4 border-t border-frost-400/10 pt-2">
+              <div className="mb-1 flex items-center gap-1.5 px-1.5 text-[9px] font-bold uppercase tracking-widest text-frost-500">
+                <Layers className="h-3 w-3" /> Layers
+              </div>
+              <div className="grid grid-cols-2 gap-x-1">
             {!lite && (
               <>
                 <Toggle checked={layers.ice} onChange={(v) => setLayers((l) => ({ ...l, ice: v }))} label="Ice concentration" />
@@ -563,18 +569,35 @@ export function ConsoleShell({
             <Toggle checked={layers.cones} onChange={(v) => setLayers((l) => ({ ...l, cones: v }))} label="Uncertainty cones" />
             <Toggle checked={layers.tracks} onChange={(v) => setLayers((l) => ({ ...l, tracks: v }))} label="Predicted tracks" />
             <Toggle checked={layers.corridor} onChange={(v) => setLayers((l) => ({ ...l, corridor: v }))} label="Corridor + ship" />
-            {!lite && (
-              <>
-                <Toggle checked={layers.graticule} onChange={(v) => setLayers((l) => ({ ...l, graticule: v }))} label="Graticule" />
-                <Toggle checked={layers.labels} onChange={(v) => setLayers((l) => ({ ...l, labels: v }))} label="Labels" />
-              </>
-            )}
+                {!lite && (
+                  <>
+                    <Toggle checked={layers.graticule} onChange={(v) => setLayers((l) => ({ ...l, graticule: v }))} label="Graticule" />
+                    <Toggle checked={layers.labels} onChange={(v) => setLayers((l) => ({ ...l, labels: v }))} label="Labels" />
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </aside>
+        )}
 
         {/* Centre: map + timeline */}
         <main className="relative flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-1.5 border-b border-frost-400/10 bg-abyss-900/60 px-3 py-1.5">
+            <button
+              type="button"
+              title={leftOpen ? "Hide bergs & layers panel" : "Show bergs & layers panel"}
+              aria-label="Toggle left panel"
+              onClick={() => setLeftOpen((v) => !v)}
+              className={`rounded-md p-1.5 transition-colors ${
+                leftOpen
+                  ? "bg-glacier-500/20 text-glacier-300"
+                  : "text-frost-400 hover:text-frost-100"
+              }`}
+            >
+              <PanelLeft size={14} />
+            </button>
+            <span className="mx-1 h-4 w-px bg-frost-400/15" />
             <button
               type="button"
               onClick={() => setView3d(true)}
@@ -599,15 +622,30 @@ export function ConsoleShell({
             >
               2D chart
             </button>
-            {corridorOverride && (
+            <span className="ml-auto flex items-center gap-1.5">
+              {corridorOverride && (
+                <button
+                  type="button"
+                  onClick={() => setCorridorOverride(null)}
+                  className="rounded-md border border-slow-400/40 px-2 py-1 text-[10px] font-semibold text-slow-400 hover:bg-slow-500/10"
+                >
+                  reset corridor override
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setCorridorOverride(null)}
-                className="ml-auto rounded-md border border-slow-400/40 px-2 py-1 text-[10px] font-semibold text-slow-400 hover:bg-slow-500/10"
+                title={rightOpen ? "Hide voyage & verdict panel" : "Show voyage & verdict panel"}
+                aria-label="Toggle right panel"
+                onClick={() => setRightOpen((v) => !v)}
+                className={`rounded-md p-1.5 transition-colors ${
+                  rightOpen
+                    ? "bg-glacier-500/20 text-glacier-300"
+                    : "text-frost-400 hover:text-frost-100"
+                }`}
               >
-                reset corridor override
+                <PanelRight size={14} />
               </button>
-            )}
+            </span>
           </div>
           <div className="relative min-h-0 flex-1">
             {view3d && !lite ? (
@@ -631,6 +669,7 @@ export function ConsoleShell({
                 onSelectBerg={(id) => {
                   setSelectedBergId(id);
                   setPanel("berg");
+                  setRightOpen(true);
                 }}
                 detail={bergDetail}
                 voyage={voyage}
@@ -661,11 +700,13 @@ export function ConsoleShell({
               onSelectBerg={(id) => {
                 setSelectedBergId(id);
                 setPanel("berg");
+                setRightOpen(true);
               }}
             />
             )}
 
-            {/* Verdict badge, pinned on the map */}
+            {/* Verdict badge, pinned on the map (closable) */}
+            {verdictCardOpen ? (
             <div className="pointer-events-none absolute left-3 top-3 max-w-sm">
               <div
                 className={cn(
@@ -698,9 +739,20 @@ export function ConsoleShell({
                       )}
                     </div>
                   </div>
-                  {scoring && (
-                    <span className="ml-auto animate-pulse text-[10px] text-frost-400">scoring…</span>
-                  )}
+                  <span className="ml-auto flex items-center gap-1.5">
+                    {scoring && (
+                      <span className="animate-pulse text-[10px] text-frost-400">scoring…</span>
+                    )}
+                    <button
+                      type="button"
+                      aria-label="Hide verdict card"
+                      title="Hide verdict card"
+                      onClick={() => setVerdictCardOpen(false)}
+                      className="pointer-events-auto rounded-md p-1 text-frost-400 transition-colors hover:bg-frost-400/10 hover:text-frost-100"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
                 </div>
                 <p className="mt-2 text-[11px] leading-snug text-frost-200">
                   {score?.score.reason ?? voyage?.verdict.reason}
@@ -724,6 +776,29 @@ export function ConsoleShell({
                 )}
               </div>
             </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setVerdictCardOpen(true)}
+                title="Show verdict card"
+                className={cn(
+                  "absolute left-3 top-3 flex items-center gap-1.5 rounded-xl border border-frost-400/15 px-2.5 py-1.5 text-xs font-bold ring-1 backdrop-blur-md transition-transform hover:scale-105",
+                  ls.bg,
+                  ls.ring,
+                  ls.text,
+                  "bg-abyss-950/85",
+                )}
+              >
+                {light === "GO" ? (
+                  <CheckCircle2 size={14} />
+                ) : light === "SLOW" ? (
+                  <AlertTriangle size={14} />
+                ) : (
+                  <ShieldAlert size={14} />
+                )}
+                {ls.label} · verdict
+              </button>
+            )}
           </div>
 
           {/* Timeline scrubber */}
@@ -765,7 +840,8 @@ export function ConsoleShell({
         </main>
 
         {/* Right panel */}
-        <aside className="flex w-[22rem] shrink-0 flex-col border-l border-frost-400/12 bg-abyss-900/45">
+        {rightOpen && (
+        <aside className="flex w-[22rem] shrink-0 flex-col border-l border-white/25 bg-abyss-900/45">
           <div className="flex shrink-0 gap-1 border-b border-frost-400/10 p-2">
             {(["voyage", "berg"] as const).map((p) => (
               <button
@@ -791,6 +867,7 @@ export function ConsoleShell({
             )}
           </div>
         </aside>
+        )}
       </div>
 
       {/* Alert toast */}
@@ -968,7 +1045,7 @@ function VoyagePanel({
               label="Model confidence"
               value={pct(s.confidence)}
               tone={s.confidence < 0.5 ? "red" : "green"}
-              hint="from replay skill, not softmax (L11)"
+              hint="from replay accuracy, not softmax (L11)"
             />
             <Stat label="Cone coverage" value={pct(s.coverage)} hint="conformal, nominal 90%" />
           </div>

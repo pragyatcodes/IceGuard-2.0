@@ -213,25 +213,39 @@ function Marker({ marker, radius, defaultSize, onClick, onHover }: MarkerProps) 
             transition: "opacity 0.15s ease-out",
           }}
         >
-          <div
-            className={cn(
-              "cursor-pointer overflow-hidden rounded-full bg-neutral-900 shadow-lg transition-transform duration-200",
-              hovered && "scale-125 shadow-xl ring-1 ring-white/50",
+          <div className="relative">
+            <div
+              className={cn(
+                "cursor-pointer overflow-hidden rounded-full bg-neutral-900 shadow-lg transition-transform duration-200",
+                hovered && "scale-125 shadow-xl ring-1 ring-white/50",
+              )}
+              style={{
+                width: `${marker.size ?? defaultSize * 100}px`,
+                height: `${marker.size ?? defaultSize * 100}px`,
+              }}
+              onMouseEnter={handlePointerEnter}
+              onMouseLeave={handlePointerLeave}
+              onClick={handleClick}
+            >
+              <img
+                src={marker.src}
+                alt={marker.label || "Marker"}
+                className="h-full w-full object-cover"
+                draggable={false}
+              />
+            </div>
+            {marker.label && (
+              <div
+                className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap text-center font-mono text-[9px] font-bold leading-none"
+                style={{
+                  color: tint,
+                  textShadow:
+                    "0 1px 2px rgba(2,6,14,0.95), 0 0 6px rgba(2,6,14,0.85)",
+                }}
+              >
+                {marker.label}
+              </div>
             )}
-            style={{
-              width: `${marker.size ?? defaultSize * 100}px`,
-              height: `${marker.size ?? defaultSize * 100}px`,
-            }}
-            onMouseEnter={handlePointerEnter}
-            onMouseLeave={handlePointerLeave}
-            onClick={handleClick}
-          >
-            <img
-              src={marker.src}
-              alt={marker.label || "Marker"}
-              className="h-full w-full object-cover"
-              draggable={false}
-            />
           </div>
         </Html>
       </group>
