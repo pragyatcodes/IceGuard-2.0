@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { SmokeBackground } from "@/components/iceguard/SmokeBackground";
+import { SiteBackdrop } from "@/components/iceguard/SiteBackdrop";
 
 const SITE = "ICEGUARD";
 const TITLE = "ICEGUARD — Antarctic sea-ice & iceberg navigation decision support";
@@ -50,12 +50,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">
-        {/* Site-wide oceanic backdrop; the veil is graded so type stays
-            readable where the shader runs bright. */}
-        <div aria-hidden="true" className="fixed inset-0 -z-10">
-          <SmokeBackground />
-          <div className="absolute inset-0 bg-gradient-to-b from-abyss-950/85 via-abyss-950/75 to-abyss-950/92" />
-        </div>
+        {/* Site-wide oceanic backdrop; skipped on /console (see SiteBackdrop). */}
+        <SiteBackdrop />
         {children}
       </body>
     </html>

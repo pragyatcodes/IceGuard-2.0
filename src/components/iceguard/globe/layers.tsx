@@ -130,7 +130,7 @@ export function TrackLayer({
                 <sphereGeometry args={[0.012, 12, 12]} />
                 <meshBasicMaterial color="#7de8ff" />
               </mesh>
-              <Html center sprite distanceFactor={9} style={{ pointerEvents: "none" }}>
+              <Html center style={{ pointerEvents: "none" }}>
                 <div className="whitespace-nowrap rounded-md border border-glacier-400/40 bg-abyss-950/85 px-1.5 py-0.5 font-mono text-[10px] text-glacier-300 backdrop-blur">
                   T+{c.t} h
                 </div>

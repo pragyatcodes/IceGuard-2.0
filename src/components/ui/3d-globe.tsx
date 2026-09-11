@@ -268,7 +268,7 @@ function RotatingGlobe({ config, markers, onMarkerClick, onMarkerHover }: Rotati
 
   // Create geometries
   const geometry = useMemo(() => {
-    return new THREE.SphereGeometry(config.radius, 64, 64);
+    return new THREE.SphereGeometry(config.radius, 48, 48);
   }, [config.radius]);
 
   const wireframeGeometry = useMemo(() => {
@@ -364,7 +364,7 @@ function Atmosphere({ radius, color, intensity, blur }: AtmosphereProps) {
 
   return (
     <mesh scale={[1.12, 1.12, 1.12]}>
-      <sphereGeometry args={[radius, 64, 32]} />
+      <sphereGeometry args={[radius, 48, 24]} />
       <primitive object={atmosphereMaterial} attach="material" />
     </mesh>
   );
@@ -504,7 +504,7 @@ export function Globe3D({
           alpha: true,
           powerPreference: "high-performance",
         }}
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         camera={{
           fov: 45,
           near: 0.1,

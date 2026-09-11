@@ -88,7 +88,23 @@ export interface ForecastResult {
   headingDeg: number;
 }
 
+const forecastCache = new Map<string, ForecastResult>();
+
 export function generateForecast(
+  berg: BergRecord,
+  issueAt: Date,
+  horizonHours = 72,
+  members = ENSEMBLE_MEMBERS,
+): ForecastResult {
+  const key = `${berg.id}|${issueAt.getTime()}|${horizonHours}|${members}`;
+  const hit = forecastCache.get(key);
+  if (hit) return hit;
+  const result = generateForecastUncached(berg, issueAt, horizonHours, members);
+  forecastCache.set(key, result);
+  return result;
+}
+
+function generateForecastUncached(
   berg: BergRecord,
   issueAt: Date,
   horizonHours = 72,
@@ -244,7 +260,22 @@ export interface ScoreVoyageOptions {
 }
 
 /** Full pipeline for one voyage: forecast every berg, then score the corridor. */
+const scoreCache = new Map<string, VoyageVerdict>();
+
 export function scoreVoyage(
+  voyage: VoyageRecord,
+  bergs: BergRecord[],
+  opts: ScoreVoyageOptions = {},
+): VoyageVerdict {
+  const key = `${voyage.id}|${JSON.stringify(voyage.corridor)}|${JSON.stringify(opts)}`;
+  const hit = scoreCache.get(key);
+  if (hit) return hit;
+  const result = scoreVoyageUncached(voyage, bergs, opts);
+  scoreCache.set(key, result);
+  return result;
+}
+
+function scoreVoyageUncached(
   voyage: VoyageRecord,
   bergs: BergRecord[],
   opts: ScoreVoyageOptions = {},
