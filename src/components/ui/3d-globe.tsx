@@ -206,6 +206,7 @@ function Marker({ marker, radius, defaultSize, onClick, onHover }: MarkerProps) 
       <group ref={imageGroupRef} position={topPosition}>
         <Html
           center
+          zIndexRange={[30, 0]}
           style={{
             pointerEvents: isVisible ? "auto" : "none",
             opacity: isVisible ? 1 : 0,
@@ -450,7 +451,7 @@ function Scene({ markers, config, onMarkerClick, onMarkerHover, children }: Scen
 
 function LoadingFallback() {
   return (
-    <Html center>
+    <Html center zIndexRange={[30, 0]}>
       <div className="flex shrink-0 flex-col items-center gap-3">
         <span className="inline-block shrink-0 text-sm text-neutral-400">Loading globe…</span>
       </div>
