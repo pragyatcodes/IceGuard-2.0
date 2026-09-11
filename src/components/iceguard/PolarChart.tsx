@@ -174,24 +174,35 @@ export function PolarChart({
       </div>
 
       {/* Legend */}
-      <div className="pointer-events-none absolute bottom-3 left-3 rounded-xl border border-frost-400/15 bg-abyss-950/80 px-3 py-2 backdrop-blur">
+      <div className="pointer-events-none absolute bottom-3 left-3 rounded-xl border border-frost-400/15 bg-abyss-950/85 px-3 py-2 backdrop-blur">
         <div className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-frost-400">
           Sea-ice concentration
         </div>
-        <div className="flex items-center gap-2">
-          <div
-            className="h-2 w-32 rounded-full"
-            style={{
-              background:
-                "linear-gradient(90deg,#04101f,#1c6a96,#5ec0e0,#b0eef7,#ffffff)",
-            }}
-          />
-          <span className="font-mono text-[9px] text-frost-400">0→100%</span>
+        <div
+          className="h-2 w-44 rounded-full"
+          style={{
+            background:
+              "linear-gradient(90deg,#040a16 0%,#0a2a46 15%,#104a74 40%,#267ca8 70%,#6ebee0 90%,#def2fc 100%)",
+          }}
+        />
+        <div className="mt-0.5 flex w-44 justify-between font-mono text-[8px] text-frost-400">
+          <span>0</span>
+          <span>15</span>
+          <span>50</span>
+          <span>90</span>
+          <span>100%</span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
           <LegendDot color="#38d3f5" label="Open" />
           <LegendDot color="#fbbf4a" label="Drag" />
           <LegendDot color="#b79bff" label="Lock" />
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-frost-400/10 pt-1.5">
+          <LegendSwatch kind="track" label="Forecast track" />
+          <LegendSwatch kind="cone" label="Uncertainty cone" />
+          <LegendSwatch kind="corridor" label="Corridor" />
+          <LegendSwatch kind="station" label="Station" />
+          <LegendSwatch kind="ship" label="Ship" />
         </div>
       </div>
     </div>
@@ -227,6 +238,33 @@ function LegendDot({ color, label }: { color: string; label: string }) {
         className="inline-block h-1.5 w-1.5 rounded-full"
         style={{ background: color }}
       />
+      <span className="text-[9px] font-medium text-frost-400">{label}</span>
+    </span>
+  );
+}
+
+function LegendSwatch({
+  kind,
+  label,
+}: {
+  kind: "track" | "cone" | "corridor" | "station" | "ship";
+  label: string;
+}) {
+  return (
+    <span className="flex items-center gap-1">
+      <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true">
+        {kind === "track" && (
+          <line x1="0" y1="5" x2="14" y2="5" stroke="#38d3f5" strokeWidth="2" strokeDasharray="4 3" />
+        )}
+        {kind === "cone" && (
+          <path d="M1 8 L7 1 L13 8 Z" fill="rgba(56,211,245,0.25)" stroke="#38d3f5" strokeWidth="1" strokeDasharray="3 2" />
+        )}
+        {kind === "corridor" && (
+          <line x1="0" y1="5" x2="14" y2="5" stroke="#f2f8ff" strokeWidth="2" strokeDasharray="5 3" />
+        )}
+        {kind === "station" && <rect x="4" y="2" width="6" height="6" fill="#f2f8ff" stroke="#030711" />}
+        {kind === "ship" && <path d="M7 0 L11 9 L7 7 L3 9 Z" fill="#f2f8ff" stroke="#030711" />}
+      </svg>
       <span className="text-[9px] font-medium text-frost-400">{label}</span>
     </span>
   );

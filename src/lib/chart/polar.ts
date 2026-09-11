@@ -66,28 +66,11 @@ export function unproject(
   return { lat, lon };
 }
 
-/** Ice concentration → colour. Deep ocean → cyan → solid white pack. */
+/** Ice concentration → colour. Deep ocean → steel blue → pale pack.
+ *  Top end is deliberately below pure white so overlays stay readable. */
 export function sicColor(sic: number, alpha = 1): string {
-  const s = Math.max(0, Math.min(1, sic));
-  if (s < 0.02) return `rgba(4, 12, 26, ${alpha})`;
-  if (s < 0.15) {
-    const t = s / 0.15;
-    return `rgba(${8 + 10 * t}, ${38 + 40 * t}, ${72 + 50 * t}, ${alpha})`;
-  }
-  if (s < 0.4) {
-    const t = (s - 0.15) / 0.25;
-    return `rgba(${18 + 8 * t}, ${78 + 60 * t}, ${122 + 60 * t}, ${alpha})`;
-  }
-  if (s < 0.7) {
-    const t = (s - 0.4) / 0.3;
-    return `rgba(${26 + 60 * t}, ${138 + 60 * t}, ${182 + 40 * t}, ${alpha})`;
-  }
-  if (s < 0.9) {
-    const t = (s - 0.7) / 0.2;
-    return `rgba(${86 + 90 * t}, ${198 + 40 * t}, ${222 + 25 * t}, ${alpha})`;
-  }
-  const t = (s - 0.9) / 0.1;
-  return `rgba(${176 + 74 * t}, ${238 + 17 * t}, ${247 + 8 * t}, ${alpha})`;
+  const [r, g, b] = sicToRgb(sic);
+  return `rgba(${r | 0}, ${g | 0}, ${b | 0}, ${alpha})`;
 }
 
 export const REGIME_COLOR: Record<string, string> = {
@@ -171,7 +154,7 @@ export interface DrawOptions {
   iceCache?: { key: string; canvas: HTMLCanvasElement } | null;
 }
 
-const ICE_STEP_PX = 5;
+const ICE_STEP_PX = 3;
 
 function buildIceLayer(
   width: number,
@@ -213,25 +196,46 @@ function buildIceLayer(
 
 function sicToRgb(sic: number): [number, number, number] {
   const s = Math.max(0, Math.min(1, sic));
-  if (s < 0.02) return [4, 12, 26];
-  if (s < 0.15) {
-    const t = s / 0.15;
-    return [8 + 10 * t, 38 + 40 * t, 72 + 50 * t];
-  }
-  if (s < 0.4) {
-    const t = (s - 0.15) / 0.25;
-    return [18 + 8 * t, 78 + 60 * t, 122 + 60 * t];
-  }
-  if (s < 0.7) {
-    const t = (s - 0.4) / 0.3;
-    return [26 + 60 * t, 138 + 60 * t, 182 + 40 * t];
-  }
-  if (s < 0.9) {
-    const t = (s - 0.7) / 0.2;
-    return [86 + 90 * t, 198 + 40 * t, 222 + 25 * t];
-  }
-  const t = (s - 0.9) / 0.1;
-  return [176 + 74 * t, 238 + 17 * t, 247 + 8 * t];
+  const lerp = (a: number[], b: number[], t: number) =>
+    [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  if (s < 0.02) return [4, 10, 22];
+  if (s < 0.15) return lerp([6, 20, 40], [10, 42, 70], s / 0.15) as [number, number, number];
+  if (s < 0.4) return lerp([10, 42, 70], [16, 74, 116], (s - 0.15) / 0.25) as [number, number, number];
+  if (s < 0.7) return lerp([16, 74, 116], [38, 124, 168], (s - 0.4) / 0.3) as [number, number, number];
+  if (s < 0.9) return lerp([38, 124, 168], [110, 190, 224], (s - 0.7) / 0.2) as [number, number, number];
+  return lerp([110, 190, 224], [222, 242, 252], (s - 0.9) / 0.1) as [number, number, number];
+}
+
+/** Generalised Antarctic coastline ([lon, lat] every ~5–10°), incl. the
+ *  Peninsula spike and the Weddell/Ross embayments. Drawn over the ice
+ *  raster so the continent reads as land, not as a glowing white blob. */
+const COAST: [number, number][] = [
+  [-180, -78], [-170, -76.5], [-160, -75], [-150, -73.5], [-140, -69],
+  [-130, -66.5], [-120, -66], [-110, -67.5], [-100, -69.5], [-90, -70.5],
+  [-80, -70.5], [-72, -70], [-66, -67.5], [-62, -64.5], [-59, -63.5],
+  [-57, -64.5], [-55, -67], [-52, -70], [-48, -73], [-44, -76],
+  [-38, -77.5], [-30, -75.5], [-20, -72], [-10, -71], [0, -70],
+  [10, -69.5], [20, -70], [30, -68.5], [40, -67.5], [50, -66.5],
+  [60, -66.5], [68, -68], [73, -68.5], [78, -67], [85, -66.5],
+  [95, -66], [105, -66], [115, -66], [125, -66.5], [135, -65.5],
+  [145, -66.5], [155, -69], [165, -71.5], [175, -74], [180, -78],
+];
+
+function haloText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  font: string,
+  fill = "rgba(240, 248, 255, 0.95)",
+): void {
+  ctx.font = font;
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(3, 7, 17, 0.85)";
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
 }
 
 export function viewKey(view: ViewState, w: number, h: number): string {
@@ -260,28 +264,69 @@ export function drawChart(
     ctx.globalAlpha = 1;
   }
 
+  // ---- Land mask (generalised coastline) -------------------------------
+  // Drawn OVER the raster: the continent reads as land instead of a
+  // saturated white pack, and everything on top of it stays legible.
+  ctx.beginPath();
+  COAST.forEach(([lon, lat], i) => {
+    const p = project({ lat, lon }, w, h, view);
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = "#0c1a2c";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(170, 215, 245, 0.5)";
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  haloText(
+    ctx,
+    "ANTARCTICA",
+    w / 2 - 33,
+    h / 2 + 3,
+    "700 9px ui-sans-serif, system-ui, sans-serif",
+    "rgba(150, 195, 230, 0.55)",
+  );
+
   // ---- Graticule -------------------------------------------------------
+  // Dual-tone: dark pass stays visible on bright pack, light pass on ocean.
   if (layers.graticule) {
-    ctx.strokeStyle = "rgba(143, 184, 222, 0.13)";
-    ctx.lineWidth = 1;
-    for (let lat = -80; lat <= -50; lat += 5) {
-      ctx.beginPath();
-      for (let lon = -180; lon <= 180; lon += 3) {
-        const p = project({ lat, lon }, w, h, view);
-        if (lon === -180) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
+    const pass = (stroke: string, width: number) => {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      for (let lat = -80; lat <= -50; lat += 5) {
+        ctx.beginPath();
+        for (let lon = -180; lon <= 180; lon += 3) {
+          const p = project({ lat, lon }, w, h, view);
+          if (lon === -180) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
+      for (let lon = -180; lon < 180; lon += 30) {
+        const a = project({ lat: -85, lon }, w, h, view);
+        const b = project({ lat: -48, lon }, w, h, view);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    };
+    pass("rgba(6, 12, 24, 0.55)", 1.3);
+    pass("rgba(160, 205, 240, 0.22)", 0.7);
+
+    // Ring + meridian labels with halo so they survive any background.
+    const lblFont = "600 10px ui-monospace, monospace";
+    for (const lat of [-60, -70, -80]) {
+      const p = project({ lat, lon: view.centreLon }, w, h, view);
+      haloText(ctx, `${-lat}°S`, p.x + 5, p.y - 4, lblFont, "rgba(205, 230, 250, 0.85)");
     }
-    for (let lon = -180; lon < 180; lon += 30) {
-      const a = project({ lat: -85, lon }, w, h, view);
-      const b = project({ lat: -48, lon }, w, h, view);
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
+    for (let lon = -150; lon <= 180; lon += 30) {
+      const p = project({ lat: view.edgeLat + 3, lon }, w, h, view);
+      const t =
+        lon === 0 ? "0°" : lon === 180 ? "180°" : lon > 0 ? `${lon}°E` : `${-lon}°W`;
+      haloText(ctx, t, p.x - 9, p.y + 6, lblFont, "rgba(205, 230, 250, 0.8)");
     }
-    // Ice edge reference at 15% is drawn by the raster itself.
   }
 
   // ---- Stations --------------------------------------------------------
@@ -296,9 +341,7 @@ export function drawChart(
       ctx.lineWidth = 1.5;
       ctx.stroke();
       if (layers.labels) {
-        ctx.font = "600 10px ui-sans-serif, system-ui, sans-serif";
-        ctx.fillStyle = "rgba(242,248,255,0.92)";
-        ctx.fillText(s.name, p.x + 7, p.y + 3);
+        haloText(ctx, `⚑ ${s.name}`, p.x + 7, p.y + 3, "700 10px ui-sans-serif, system-ui, sans-serif");
       }
     }
   }
@@ -306,36 +349,52 @@ export function drawChart(
   // ---- Corridor --------------------------------------------------------
   if (layers.corridor && o.voyage?.corridor.length) {
     const cor = o.voyage.corridor;
+    const tracePath = () => {
+      ctx.beginPath();
+      cor.forEach((pt, i) => {
+        const p = project(pt, w, h, view);
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+    };
+    // Cased line: dark underlay keeps it readable on bright pack.
     ctx.setLineDash([]);
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "rgba(242,248,255,0.55)";
-    ctx.beginPath();
-    cor.forEach((pt, i) => {
-      const p = project(pt, w, h, view);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    });
+    tracePath();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "rgba(3,7,17,0.75)";
     ctx.stroke();
+    tracePath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(242,248,255,0.9)";
+    ctx.setLineDash([7, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
     // Ice load along the route, coloured by local SIC.
     if (o.voyage.perHour) {
       for (const s of o.voyage.perHour) {
         if (s.h % 3 !== 0) continue;
         const p = project({ lat: s.lat, lon: s.lon }, w, h, view);
-        ctx.fillStyle = sicColor(Math.max(0.2, s.sic), 0.9);
+        ctx.fillStyle = sicColor(Math.max(0.2, s.sic), 0.95);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = "rgba(3,7,17,0.8)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
     }
 
     // Waypoints
     for (const pt of cor) {
       const p = project(pt, w, h, view);
-      ctx.fillStyle = "rgba(242,248,255,0.85)";
+      ctx.fillStyle = "rgba(242,248,255,0.95)";
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = "rgba(3,7,17,0.9)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     }
   }
 
@@ -400,7 +459,7 @@ export function drawChart(
   for (const b of o.bergs) {
     const p = project(b, w, h, view);
     const color = REGIME_COLOR[b.regime] ?? "#38d3f5";
-    const r = b.sizeClass === "GIANT" ? 8 : b.sizeClass === "LARGE" ? 6.5 : b.sizeClass === "MEDIUM" ? 5 : 4;
+    const r = b.sizeClass === "GIANT" ? 10 : b.sizeClass === "LARGE" ? 8 : b.sizeClass === "MEDIUM" ? 6.5 : 5.5;
 
     if (b.selected) {
       ctx.strokeStyle = hexA(color, 0.5);
@@ -427,10 +486,16 @@ export function drawChart(
     ctx.stroke();
 
     if (layers.labels) {
-      ctx.font = "700 10px ui-monospace, monospace";
-      ctx.fillStyle = "rgba(242,248,255,0.95)";
       const label = b.label ?? b.bergId;
-      ctx.fillText(label, p.x + r + 5, p.y + 3.5);
+      haloText(ctx, label, p.x + r + 6, p.y + 4, "700 11px ui-monospace, monospace");
+      haloText(
+        ctx,
+        b.sizeClass.toLowerCase(),
+        p.x + r + 6,
+        p.y + 15,
+        "600 8.5px ui-monospace, monospace",
+        "rgba(180, 210, 235, 0.85)",
+      );
     }
   }
 
@@ -445,23 +510,26 @@ export function drawChart(
     ctx.rotate(th);
     ctx.fillStyle = "#f2f8ff";
     ctx.beginPath();
-    ctx.moveTo(0, -9);
-    ctx.lineTo(6, 7);
-    ctx.lineTo(0, 4);
-    ctx.lineTo(-6, 7);
+    ctx.moveTo(0, -11);
+    ctx.lineTo(7, 8);
+    ctx.lineTo(0, 5);
+    ctx.lineTo(-7, 8);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = "rgba(3,7,17,0.9)";
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.4;
     ctx.stroke();
     ctx.restore();
 
     // Pulse ring — the ship is the thing the officer is responsible for.
-    ctx.strokeStyle = "rgba(242,248,255,0.35)";
+    ctx.strokeStyle = "rgba(242,248,255,0.4)";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 16, 0, Math.PI * 2);
     ctx.stroke();
+    if (layers.labels) {
+      haloText(ctx, "your ship", p.x + 14, p.y + 4, "700 10px ui-monospace, monospace");
+    }
   }
 
   return cache;
