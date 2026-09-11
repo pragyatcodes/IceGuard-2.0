@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.log
+.DS_Store
+
+# local env + db — never commit; both are recreated on any host
+.env
+prisma/dev.db
+prisma/dev.db-journal
+
+# caches
+.turbo/
+.tsbuildinfo
+tsconfig.tsbuildinfo

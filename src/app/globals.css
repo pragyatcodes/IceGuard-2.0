@@ -1,0 +1,357 @@
+@import "tailwindcss";
+
+/*
+ * ICEGUARD design tokens.
+ * Ops-console palette: deep polar navy, cyan for model output, amber for
+ * caution, red for no-go, violet for ice-lock. High contrast because this is
+ * read on a bridge at night, not on a sofa.
+ */
+@theme {
+  --color-abyss-950: #030711;
+  --color-abyss-900: #060d1c;
+  --color-abyss-850: #0a1428;
+  --color-abyss-800: #0f1d36;
+  --color-abyss-700: #17294a;
+  --color-abyss-600: #22395f;
+  --color-frost-50: #f2f8ff;
+  --color-frost-100: #dceafa;
+  --color-frost-200: #b9d5f2;
+  --color-frost-300: #c9dff5;
+  --color-frost-400: #a9cbe9;
+  --color-frost-500: #8fb8de;
+  --color-frost-600: #7ea9d0;
+  --color-glacier-300: #7de8ff;
+  --color-glacier-400: #38d3f5;
+  --color-glacier-500: #0fb4dd;
+  --color-glacier-600: #0a8bb0;
+  --color-go-400: #34e39b;
+  --color-go-500: #12c97f;
+  --color-slow-400: #fbbf4a;
+  --color-slow-500: #e89b1c;
+  --color-nogo-400: #ff6b7d;
+  --color-nogo-500: #e63950;
+  --color-lock-400: #b79bff;
+  --color-lock-500: #9270f0;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo,
+    Consolas, monospace;
+}
+
+@layer base {
+  * {
+    border-color: color-mix(in oklab, var(--color-abyss-600) 60%, transparent);
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-abyss-950);
+    color: var(--color-frost-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-glacier-500) 45%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Frosted glass panel — the core surface of the console. */
+  .glass {
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--color-abyss-800) 88%, transparent),
+      color-mix(in oklab, var(--color-abyss-900) 92%, transparent)
+    );
+    border: 1px solid color-mix(in oklab, var(--color-frost-400) 16%, transparent);
+    backdrop-filter: blur(14px);
+  }
+  .glass-soft {
+    background: color-mix(in oklab, var(--color-abyss-850) 70%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-frost-400) 10%, transparent);
+  }
+  .glow-glacier {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-glacier-500) 30%, transparent),
+      0 8px 40px -12px color-mix(in oklab, var(--color-glacier-500) 45%, transparent);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Keeps light type legible where the oceanic shader runs bright behind it. */
+  .text-shadow-soft {
+    text-shadow:
+      0 1px 2px rgb(3 7 17 / 0.55),
+      0 2px 16px rgb(3 7 17 / 0.4);
+  }
+  .grid-noise {
+    background-image: radial-gradient(
+        circle at 1px 1px,
+        color-mix(in oklab, var(--color-frost-400) 14%, transparent) 1px,
+        transparent 0
+      );
+    background-size: 22px 22px;
+  }
+  .aurora {
+    background:
+      radial-gradient(60% 55% at 15% 0%, color-mix(in oklab, var(--color-glacier-500) 22%, transparent), transparent 70%),
+      radial-gradient(50% 50% at 85% 10%, color-mix(in oklab, var(--color-lock-500) 18%, transparent), transparent 70%),
+      radial-gradient(70% 60% at 50% 100%, color-mix(in oklab, var(--color-abyss-700) 60%, transparent), transparent 75%);
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-frost-500) 45%, transparent) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-frost-500) 40%, transparent);
+    border-radius: 999px;
+  }
+}
+
+/* Range input used by the timeline scrubber. */
+input[type="range"].scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--color-frost-500),
+    var(--color-glacier-500)
+  );
+  outline: none;
+}
+input[type="range"].scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--color-frost-50);
+  border: 3px solid var(--color-glacier-500);
+  box-shadow: 0 0 14px color-mix(in oklab, var(--color-glacier-500) 70%, transparent);
+  cursor: pointer;
+}
+input[type="range"].scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--color-frost-50);
+  border: 3px solid var(--color-glacier-500);
+  cursor: pointer;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.85); opacity: 0.75; }
+  70% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+@keyframes sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.sweep {
+  animation: sweep 9s linear infinite;
+}
+
+/* ---------------------------------------------------------------- Shiny CTA
+ * Ported from the 21st.dev "shiny-cta" recipe. Google-Fonts @import removed so
+ * the app stays network-free; colours themed to the glacier palette; size
+ * modifiers and inline-flex added so the same class works on <a> as <button>.
+ */
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --gradient-angle-offset {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --gradient-percent {
+  syntax: "<percentage>";
+  initial-value: 5%;
+  inherits: false;
+}
+@property --gradient-shine {
+  syntax: "<color>";
+  initial-value: white;
+  inherits: false;
+}
+
+.shiny-cta {
+  --shiny-cta-bg: var(--color-abyss-900);
+  --shiny-cta-bg-subtle: var(--color-abyss-700);
+  --shiny-cta-fg: var(--color-frost-50);
+  --shiny-cta-highlight: var(--color-glacier-500);
+  --shiny-cta-highlight-subtle: var(--color-glacier-300);
+  --animation: gradient-angle linear infinite;
+  --duration: 3s;
+  --shadow-size: 2px;
+  --transition: 800ms cubic-bezier(0.25, 1, 0.5, 1);
+
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  outline-offset: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  padding: 0.9rem 1.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 360px;
+  color: var(--shiny-cta-fg);
+  background: linear-gradient(var(--shiny-cta-bg), var(--shiny-cta-bg)) padding-box,
+    conic-gradient(
+      from calc(var(--gradient-angle) - var(--gradient-angle-offset)),
+      transparent,
+      var(--shiny-cta-highlight) var(--gradient-percent),
+      var(--gradient-shine) calc(var(--gradient-percent) * 2),
+      var(--shiny-cta-highlight) calc(var(--gradient-percent) * 3),
+      transparent calc(var(--gradient-percent) * 4)
+    ) border-box;
+  box-shadow: inset 0 0 0 1px var(--shiny-cta-bg-subtle);
+  transition: var(--transition);
+  transition-property: --gradient-angle-offset, --gradient-percent, --gradient-shine;
+}
+.shiny-sm {
+  padding: 0.55rem 1.25rem;
+  font-size: 0.8rem;
+}
+.shiny-lg {
+  padding: 1.05rem 2.3rem;
+  font-size: 1.05rem;
+}
+
+.shiny-cta::before,
+.shiny-cta::after,
+.shiny-cta span::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  translate: -50% -50%;
+  z-index: -1;
+}
+
+.shiny-cta:active {
+  translate: 0 1px;
+}
+
+/* Dots pattern */
+.shiny-cta::before {
+  --size: calc(100% - var(--shadow-size) * 3);
+  --position: 2px;
+  --space: calc(var(--position) * 2);
+  width: var(--size);
+  height: var(--size);
+  background: radial-gradient(
+    circle at var(--position) var(--position),
+    white calc(var(--position) / 4),
+    transparent 0
+  ) padding-box;
+  background-size: var(--space) var(--space);
+  background-repeat: space;
+  mask-image: conic-gradient(
+    from calc(var(--gradient-angle) + 45deg),
+    black,
+    transparent 10% 90%,
+    black
+  );
+  border-radius: inherit;
+  opacity: 0.4;
+  z-index: -1;
+}
+
+/* Inner shimmer */
+.shiny-cta::after {
+  --animation: shimmer linear infinite;
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(-50deg, transparent, var(--shiny-cta-highlight), transparent);
+  mask-image: radial-gradient(circle at bottom, transparent 40%, black);
+  opacity: 0.6;
+}
+
+.shiny-cta span {
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shiny-cta span::before {
+  --size: calc(100% + 1rem);
+  width: var(--size);
+  height: var(--size);
+  box-shadow: inset 0 -1ex 2rem 4px var(--shiny-cta-highlight);
+  opacity: 0;
+  transition: opacity var(--transition);
+  animation: calc(var(--duration) * 1.5) breathe linear infinite;
+}
+
+/* Animate */
+.shiny-cta,
+.shiny-cta::before,
+.shiny-cta::after {
+  animation: var(--animation) var(--duration),
+    var(--animation) calc(var(--duration) / 0.4) reverse paused;
+  animation-composition: add;
+}
+
+.shiny-cta:is(:hover, :focus-visible) {
+  --gradient-percent: 20%;
+  --gradient-angle-offset: 95deg;
+  --gradient-shine: var(--shiny-cta-highlight-subtle);
+}
+
+.shiny-cta:is(:hover, :focus-visible),
+.shiny-cta:is(:hover, :focus-visible)::before,
+.shiny-cta:is(:hover, :focus-visible)::after {
+  animation-play-state: running;
+}
+
+.shiny-cta:is(:hover, :focus-visible) span::before {
+  opacity: 1;
+}
+
+.shiny-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@keyframes gradient-angle {
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+@keyframes shimmer {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes breathe {
+  from, to {
+    scale: 1;
+  }
+  50% {
+    scale: 1.2;
+  }
+}
