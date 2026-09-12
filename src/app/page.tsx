@@ -23,6 +23,7 @@ import { conformalQuantile, empiricalCoverage } from "@/lib/stats/conformal";
 import { scoreVoyage, type BergRecord, type VoyageRecord } from "@/lib/pipeline/forecast";
 import type { LatLng } from "@/lib/geo/geodesic";
 import { Badge } from "@/components/ui/primitives";
+import { LiquidLink } from "@/components/iceguard/liquid-link";
 import { fmt } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -79,29 +80,26 @@ export default async function LandingPage() {
   return (
     <div className="relative min-h-screen">
       {/* ------------------------------------------------------------ Nav */}
-      <nav className="sticky top-0 z-40 border-b border-frost-400/10 bg-abyss-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-5">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-glacier-500/15 text-glacier-300 ring-1 ring-glacier-500/35">
-              <MountainSnow size={17} />
+      <nav className="sticky top-0 z-40">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5">
+          <LiquidLink href="/" buttonClassName="rounded-lg text-frost-50">
+            <span className="grid h-6 w-6 place-items-center rounded-md bg-glacier-500/20 text-glacier-300 ring-1 ring-glacier-500/35">
+              <MountainSnow size={14} />
             </span>
-            <span className="text-sm font-bold tracking-tight text-frost-50">ICEGUARD</span>
-          </Link>
-          <div className="hidden items-center gap-5 text-xs text-frost-400 md:flex">
-            <a href="#about" className="transition-colors hover:text-frost-100">About us</a>
+            <span className="text-sm font-bold tracking-tight">ICEGUARD</span>
+          </LiquidLink>
+          <div className="hidden items-center gap-2 md:flex">
+            <LiquidLink href="#about" buttonClassName="rounded-lg font-medium text-frost-100">
+              About us
+            </LiquidLink>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Link
-              href="/skill"
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-frost-300 transition-colors hover:text-frost-50"
-            >
+            <LiquidLink href="/skill" buttonClassName="rounded-lg font-medium text-frost-100">
               Replay &amp; validation
-            </Link>
-            <Link href="/console" className="shiny-cta shiny-sm">
-              <span>
-                Open console <ArrowRight size={13} />
-              </span>
-            </Link>
+            </LiquidLink>
+            <LiquidLink href="/console" buttonClassName="rounded-lg font-semibold text-frost-50">
+              Open console <ArrowRight size={13} />
+            </LiquidLink>
           </div>
         </div>
       </nav>
