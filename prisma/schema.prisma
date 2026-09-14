@@ -1,10 +1,4 @@
 // ICEGUARD — SIH26059 (MoES)
-// Vector store. Analysis §6.2 calls for PostGIS; SQLite is the zero-setup dev
-// provider so the app runs anywhere. Swap the provider block to `postgresql`
-// and set DATABASE_URL for production (see README §Deploy). All geometry is
-// stored as WGS84 lat/lon and projected to polar stereographic in code, so no
-// provider-specific GIS extension is required.
-
 generator client {
   provider = "prisma-client-js"
 }
