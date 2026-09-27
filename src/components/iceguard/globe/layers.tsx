@@ -36,7 +36,29 @@ const svgUri = (svg: string) => `data:image/svg+xml;utf8,${encodeURIComponent(sv
 
 export function bergIcon(color: string): string {
   return svgUri(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14.5" fill="#060d1c" stroke="${color}" stroke-width="2.5"/><path d="M16 6.5 L24 20 L20 18 L16 25.5 L12 18 L8 20 Z" fill="#eaf6ff"/><path d="M16 6.5 L24 20 L20 18 L16 25.5 Z" fill="#9cc4e8"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14.5" fill="#060d1c" stroke="${color}" stroke-width="2.5"/><path d="M9.5 19 L13.5 26 L16.5 23.5 L20.5 26.5 L22.5 19 Z" fill="rgba(96,180,235,0.45)"/><path d="M9.5 19 L12.5 12.5 L14.5 15 L16.5 8.5 L19.5 13.5 L22.5 19 Z" fill="#eaf6ff"/><path d="M16.5 8.5 L19.5 13.5 L22.5 19 L16.5 19 Z" fill="#9cc4e8"/><line x1="8.5" y1="19" x2="23.5" y2="19" stroke="#9edcff" stroke-width="1"/></svg>`,
+  );
+}
+
+export function shipTopIcon(): string {
+  return svgUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 128"><path d="M32 4 C44 28 48 44 48 62 L48 106 C48 118 41 124 32 124 C23 124 16 118 16 106 L16 62 C16 44 20 28 32 4 Z" fill="#d94f4f" stroke="#0a1428" stroke-width="5"/><rect x="23" y="42" width="18" height="50" rx="3" fill="#f2f8ff"/><rect x="18" y="66" width="28" height="18" rx="2" fill="#e8eef7" stroke="#0a1428" stroke-width="2.5"/><rect x="26" y="70" width="12" height="7" fill="#31435e"/><rect x="27" y="94" width="10" height="11" rx="2" fill="#ffb454"/></svg>`,
+  );
+}
+
+let shipTex: THREE.Texture | null = null;
+export function shipTopTexture(): THREE.Texture {
+  if (!shipTex) {
+    shipTex = new THREE.TextureLoader().load(shipTopIcon());
+    shipTex.colorSpace = THREE.SRGBColorSpace;
+    shipTex.anisotropy = 4;
+  }
+  return shipTex;
+}
+
+export function portIcon(): string {
+  return svgUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14.5" fill="#060d1c" stroke="#ffd479" stroke-width="2.5"/><path d="M16 11 V22 M16 22 C12 22 10 19.5 10 18 M16 22 C20 22 22 19.5 22 18 M12 14 H20" stroke="#ffd479" stroke-width="2" fill="none"/><circle cx="16" cy="9.5" r="1.8" fill="#ffd479"/></svg>`,
   );
 }
 
@@ -243,9 +265,15 @@ export function ShipActor({
   const frac = total > 0 ? Math.min(1, curKm / total) : 0;
   const pos = interpolatePolyline(corridor, frac);
   const ahead = interpolatePolyline(corridor, Math.min(1, frac + 0.02));
-  const pV = latLngToVector3(pos.lat, pos.lon, R * 1.015);
-  const dir = latLngToVector3(ahead.lat, ahead.lon, R * 1.015).sub(pV).normalize();
-  const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  const pV = latLngToVector3(pos.lat, pos.lon, R * 1.017);
+  const dir = latLngToVector3(ahead.lat, ahead.lon, R * 1.017).sub(pV).normalize();
+  // Orient a flat plane on the sphere: +Y = heading, +Z = outward radial.
+  const radial = pV.clone().normalize();
+  const yAxis = dir.clone().sub(radial.clone().multiplyScalar(dir.dot(radial))).normalize();
+  const xAxis = new THREE.Vector3().crossVectors(yAxis, radial).normalize();
+  const quat = new THREE.Quaternion().setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(xAxis, yAxis, radial),
+  );
 
   const wakePts = useMemo(() => {
     const from = Math.max(0, frac - 80 / Math.max(total, 1));
@@ -258,8 +286,13 @@ export function ShipActor({
   return (
     <group>
       <mesh position={pV} quaternion={quat}>
-        <coneGeometry args={[0.014, 0.055, 4]} />
-        <meshBasicMaterial color="#f2f8ff" />
+        <planeGeometry args={[0.075, 0.15]} />
+        <meshBasicMaterial
+          map={shipTopTexture()}
+          transparent
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
       <Line points={wakePts} color="#7de8ff" lineWidth={1.6} transparent opacity={0.6} />
       {showLabel && (

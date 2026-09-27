@@ -14,12 +14,17 @@ import {
   ShipActor,
   TrackLayer,
   bergIcon,
+  portIcon,
   shipIcon,
   stationIcon,
   useZoomed,
 } from "@/components/iceguard/globe/layers";
 import { destination, bearingDeg, geodesicKm, nmToKm, polylineLengthKm, KM_PER_NM } from "@/lib/geo/geodesic";
 import type { LatLng } from "@/lib/geo/geodesic";
+import { CAPE_TOWN, ISEA_REFERENCE_ROUTE } from "@/lib/geo/expedition";
+import { fetchLiveSatTexture } from "@/components/iceguard/globe/live-sat";
+import type { CanvasTexture } from "three";
+import type { ChartLayers } from "@/lib/chart/polar";
 import { Badge } from "@/components/ui/primitives";
 import { fmt } from "@/lib/utils";
 
@@ -152,6 +157,7 @@ export function GlobeMap({
   activeCorridor,
   hour,
   onApplyCorridor,
+  layers,
 }: {
   bergs: GlobeBerg[];
   voyages: GlobeVoyage[];
@@ -163,10 +169,39 @@ export function GlobeMap({
   activeCorridor: LatLng[];
   hour: number;
   onApplyCorridor: (c: LatLng[]) => void;
+  layers: ChartLayers;
 }) {
   const [alt, setAlt] = React.useState<AltState | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
+
+  // Live satellite skin (NASA GIBS, latest pass, no API key)
+  const [liveTex, setLiveTex] = React.useState<CanvasTexture | null>(null);
+  const [liveWhen, setLiveWhen] = React.useState<string | null>(null);
+  const [liveErr, setLiveErr] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!layers.liveSat) {
+      setLiveTex(null);
+      setLiveErr(false);
+      return;
+    }
+    fetchLiveSatTexture()
+      .then((r) => {
+        if (cancelled) return;
+        setLiveTex(r.texture);
+        setLiveWhen(r.capturedAt);
+        setLiveErr(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLiveTex(null);
+        setLiveErr(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [layers.liveSat]);
 
   React.useEffect(() => setAlt(null), [voyage?.id, activeCorridor]);
 
@@ -188,8 +223,20 @@ export function GlobeMap({
         color: "#34e39b",
         size: 16,
       })),
+      ...(layers.expedition
+        ? [
+            {
+              lat: CAPE_TOWN.lat,
+              lng: CAPE_TOWN.lon,
+              src: portIcon(),
+              label: "Cape Town · ISEA port",
+              color: "#ffd479",
+              size: 16,
+            },
+          ]
+        : []),
     ],
-    [bergs],
+    [bergs, layers.expedition],
   );
 
   async function suggestAlternate() {
@@ -265,6 +312,7 @@ export function GlobeMap({
       <Globe3D
         className="h-full w-full"
         markers={markers}
+        liveTexture={liveTex}
         onMarkerClick={(m) => {
           const b = bergs.find((x) => m.label?.startsWith(x.bergId));
           if (b) onSelectBerg(b.bergId);
@@ -293,7 +341,32 @@ export function GlobeMap({
           hour={hour}
           alt={alt}
         />
+        {layers.expedition && (
+          <ArcLine
+            points={ISEA_REFERENCE_ROUTE}
+            R={R}
+            lift={1.008}
+            color="#ffd479"
+            width={1.4}
+            dashed
+            opacity={0.8}
+          />
+        )}
       </Globe3D>
+
+      {/* live satellite status */}
+      <div className="pointer-events-none absolute right-3 top-3">
+        {layers.liveSat && liveTex && (
+          <div className="rounded-lg border border-go-500/40 bg-abyss-950/85 px-2.5 py-1.5 text-[10px] font-bold text-go-400 backdrop-blur">
+            LIVE SAT · NASA GIBS{liveWhen ? ` · ${liveWhen.slice(0, 10)}` : ""}
+          </div>
+        )}
+        {layers.liveSat && !liveTex && (
+          <div className="rounded-lg border border-slow-500/40 bg-abyss-950/85 px-2.5 py-1.5 text-[10px] font-bold text-slow-400 backdrop-blur">
+            {liveErr ? "SAT LINK OFFLINE — base map" : "SAT LINK — fetching latest pass…"}
+          </div>
+        )}
+      </div>
 
       {/* legend + hints */}
       <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">

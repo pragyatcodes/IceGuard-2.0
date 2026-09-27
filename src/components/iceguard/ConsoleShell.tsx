@@ -11,6 +11,7 @@ import {
   MountainSnow,
   Layers,
   Link2,
+  MessageSquareWarning,
   PauseCircle,
   Radio,
   Route as RouteIcon,
@@ -38,6 +39,7 @@ const GlobeMap = dynamic(() => import("@/components/iceguard/GlobeMap"), {
 });
 import { cn, fmt, fmtKm, latLon, pct, relAge, utcClock } from "@/lib/utils";
 import { DEFAULT_LAYERS, type ChartBerg, type ChartLayers, type ChartTrack } from "@/lib/chart/polar";
+import { ISEA_LEGS } from "@/lib/geo/expedition";
 import type { LatLng } from "@/lib/geo/geodesic";
 
 interface Berg {
@@ -443,6 +445,14 @@ export function ConsoleShell({
             <Activity className="h-3 w-3" />
             {health.model.version}
           </Badge>
+          <a
+            href="mailto:iceguard-support@ncpor.in?subject=ICEGUARD%20feedback"
+            className="flex items-center gap-1.5 rounded-lg border border-frost-400/15 px-2.5 py-1 text-[10px] font-medium text-frost-300 transition-colors hover:text-frost-50"
+          >
+            <MessageSquareWarning size={12} />
+            <span className="hidden md:inline">Report issue / send feedback</span>
+            <span className="md:hidden">Feedback</span>
+          </a>
           <Button size="sm" variant="outline" onClick={() => setLite((v) => !v)}>
             {lite ? "Full mode" : "Lite mode"}
           </Button>
@@ -573,6 +583,8 @@ export function ConsoleShell({
                   <>
                     <Toggle checked={layers.graticule} onChange={(v) => setLayers((l) => ({ ...l, graticule: v }))} label="Graticule" />
                     <Toggle checked={layers.labels} onChange={(v) => setLayers((l) => ({ ...l, labels: v }))} label="Labels" />
+                    <Toggle checked={layers.liveSat} onChange={(v) => setLayers((l) => ({ ...l, liveSat: v }))} label="Live satellite imagery" hint="NASA GIBS latest pass" />
+                    <Toggle checked={layers.expedition} onChange={(v) => setLayers((l) => ({ ...l, expedition: v }))} label="ISEA expedition route" hint="Cape Town–Bharati–Maitri" />
                   </>
                 )}
               </div>
@@ -680,6 +692,7 @@ export function ConsoleShell({
                   setCorridorOverride(c);
                   setToast("Alternate corridor applied — voyage re-scored.");
                 }}
+                layers={layers}
               />
             ) : (
             <PolarChart
@@ -762,16 +775,21 @@ export function ConsoleShell({
                     L8 — capped at SLOW: SAR scene is {relAge(score.dataAgeH)} old.
                   </p>
                 )}
-                {canOverride && voyage && (
+                {voyage && (
                   <button
                     type="button"
+                    title={canOverride ? "Log an officer override (audited)" : "Requires OPERATOR or ADMIN sign-in"}
                     onClick={() => {
+                      if (!canOverride) {
+                        setToast("Overrides need OPERATOR or ADMIN — use Sign in in the top bar first.");
+                        return;
+                      }
                       setOverrideLight(light === "GO" ? "SLOW" : "GO");
                       setOverrideOpen(true);
                     }}
                     className="mt-2 rounded-md border border-frost-400/25 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-frost-300 transition-colors hover:border-slow-400/60 hover:text-slow-400"
                   >
-                    Override verdict
+                    Override verdict{canOverride ? "" : " (sign in)"}
                   </button>
                 )}
               </div>
@@ -888,9 +906,18 @@ export function ConsoleShell({
       )}
 
       {/* Permanent disclaimer — L10 and L15 */}
-      <footer className="shrink-0 border-t border-frost-400/10 bg-abyss-900 px-4 py-1.5 text-center text-[10px] text-frost-500">
-        Decision support only. ICEGUARD does not replace the master&apos;s or pilot&apos;s
-        judgement or official ice charts, and it issues no helm commands. Overrides are logged.
+      <footer className="flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-0.5 border-t border-frost-400/10 bg-abyss-900 px-4 py-1.5 text-center text-[10px] text-frost-500">
+        <span>
+          Decision support only. ICEGUARD does not replace the master&apos;s or pilot&apos;s
+          judgement or official ice charts, and it issues no helm commands. Overrides are logged.
+        </span>
+        <a
+          href="mailto:iceguard-support@ncpor.in?subject=ICEGUARD%20feedback"
+          className="flex items-center gap-1.5 font-semibold text-frost-300 underline decoration-frost-500/50 underline-offset-2 hover:text-frost-50"
+        >
+          <MessageSquareWarning size={11} />
+          Report issue / send feedback
+        </a>
       </footer>
 
       {/* Override dialog — the audit trail is the feature, not an afterthought */}
@@ -1071,6 +1098,24 @@ function VoyagePanel({
               tone={at.clearanceKm < 0 ? "red" : at.clearanceKm < 15 ? "amber" : "green"}
             />
             {at.worstBerg && <Row label="Closest berg" value={at.worstBerg} mono />}
+          </div>
+        </Card>
+      )}
+
+      {voyage && (
+        <Card>
+          <CardHeader title="ISEA reference transect" icon={<RouteIcon size={15} />} />
+          <div className="space-y-1.5 p-3 text-[11px]">
+            {ISEA_LEGS.map((l) => (
+              <div key={l.name} className="flex items-center justify-between">
+                <span className="text-frost-200">{l.name}</span>
+                <span className="font-mono text-frost-400">{l.days}</span>
+              </div>
+            ))}
+            <p className="pt-1 text-[10px] leading-snug text-frost-500">
+              Published NCPOR charter-vessel voyage plan (39th–44th ISEA). Drawn on the 3D globe as
+              the amber dashed line — reference routing, not live AIS.
+            </p>
           </div>
         </Card>
       )}

@@ -495,6 +495,12 @@ export default async function LandingPage() {
               <a href="/skill" className="hover:text-frost-200">Validation</a>
               <a href="/api/health" className="hover:text-frost-200">Health API</a>
               <a href="/api/bundle" className="hover:text-frost-200">Lite bundle</a>
+              <a
+                href="mailto:iceguard-support@ncpor.in?subject=ICEGUARD%20feedback"
+                className="hover:text-frost-200"
+              >
+                Report issue / send feedback
+              </a>
             </div>
           </div>
           <p className="mt-4 max-w-3xl text-[10px] leading-relaxed text-frost-600">

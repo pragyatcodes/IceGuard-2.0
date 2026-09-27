@@ -77,6 +77,8 @@ interface Globe3DProps {
   onMarkerHover?: (marker: GlobeMarker | null) => void;
   /** ICEGUARD extension: extra scene layers (tracks, ship, cones). */
   children?: React.ReactNode;
+  /** ICEGUARD extension: live satellite texture overriding the base map. */
+  liveTexture?: THREE.Texture | null;
 }
 
 // ============================================================================
@@ -262,9 +264,10 @@ interface RotatingGlobeProps {
   markers: GlobeMarker[];
   onMarkerClick?: (marker: GlobeMarker) => void;
   onMarkerHover?: (marker: GlobeMarker | null) => void;
+  liveTexture?: THREE.Texture | null;
 }
 
-function RotatingGlobe({ config, markers, onMarkerClick, onMarkerHover }: RotatingGlobeProps) {
+function RotatingGlobe({ config, markers, onMarkerClick, onMarkerHover, liveTexture }: RotatingGlobeProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   // Load Earth textures (local, self-contained)
@@ -295,7 +298,7 @@ function RotatingGlobe({ config, markers, onMarkerClick, onMarkerHover }: Rotati
       {/* Main globe mesh with Earth texture */}
       <mesh geometry={geometry}>
         <meshStandardMaterial
-          map={earthTexture}
+          map={liveTexture ?? earthTexture}
           bumpMap={bumpTexture}
           bumpScale={config.bumpScale * 0.05}
           roughness={0.7}
@@ -395,9 +398,10 @@ interface SceneProps {
   onMarkerClick?: (marker: GlobeMarker) => void;
   onMarkerHover?: (marker: GlobeMarker | null) => void;
   children?: React.ReactNode;
+  liveTexture?: THREE.Texture | null;
 }
 
-function Scene({ markers, config, onMarkerClick, onMarkerHover, children }: SceneProps) {
+function Scene({ markers, config, onMarkerClick, onMarkerHover, children, liveTexture }: SceneProps) {
   const { camera } = useThree();
 
   // Set initial camera position (pulled back to accommodate markers)
@@ -427,6 +431,7 @@ function Scene({ markers, config, onMarkerClick, onMarkerHover, children }: Scen
         markers={markers}
         onMarkerClick={onMarkerClick}
         onMarkerHover={onMarkerHover}
+        liveTexture={liveTexture}
       />
 
       {/* ICEGUARD layers: trajectories, cone, ship, corridors */}
@@ -508,6 +513,7 @@ export function Globe3D({
   onMarkerClick,
   onMarkerHover,
   children,
+  liveTexture,
 }: Globe3DProps) {
   const mergedConfig = useMemo(() => ({ ...defaultConfig, ...config }), [config]);
 
@@ -536,6 +542,7 @@ export function Globe3D({
             config={mergedConfig}
             onMarkerClick={onMarkerClick}
             onMarkerHover={onMarkerHover}
+            liveTexture={liveTexture}
           >
             {children}
           </Scene>

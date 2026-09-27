@@ -126,6 +126,8 @@ export interface ChartLayers {
   corridor: boolean;
   labels: boolean;
   stations: boolean;
+  liveSat: boolean;
+  expedition: boolean;
 }
 
 export const DEFAULT_LAYERS: ChartLayers = {
@@ -137,6 +139,8 @@ export const DEFAULT_LAYERS: ChartLayers = {
   corridor: true,
   labels: true,
   stations: true,
+  liveSat: true,
+  expedition: true,
 };
 
 export const STATIONS: (Pt & { name: string })[] = [
@@ -509,16 +513,50 @@ export function drawChart(
       ctx.fill();
     }
 
-    // Iceberg glyph: a triangle above a deeper keel line.
-    ctx.fillStyle = color;
+    // Iceberg glyph: faceted freeboard + waterline + submerged keel.
+    ctx.fillStyle = "rgba(96,180,235,0.30)";
     ctx.beginPath();
-    ctx.moveTo(p.x, p.y - r);
-    ctx.lineTo(p.x + r * 0.92, p.y + r * 0.5);
-    ctx.lineTo(p.x - r * 0.92, p.y + r * 0.5);
+    ctx.moveTo(p.x - r * 0.9, p.y + r * 0.3);
+    ctx.lineTo(p.x - r * 0.42, p.y + r * 1.3);
+    ctx.lineTo(p.x + r * 0.12, p.y + r * 0.95);
+    ctx.lineTo(p.x + r * 0.62, p.y + r * 1.4);
+    ctx.lineTo(p.x + r * 0.9, p.y + r * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#eaf6ff";
+    ctx.beginPath();
+    ctx.moveTo(p.x - r * 0.9, p.y + r * 0.3);
+    ctx.lineTo(p.x - r * 0.52, p.y - r * 0.55);
+    ctx.lineTo(p.x - r * 0.18, p.y - r * 0.22);
+    ctx.lineTo(p.x + r * 0.12, p.y - r);
+    ctx.lineTo(p.x + r * 0.52, p.y - r * 0.35);
+    ctx.lineTo(p.x + r * 0.9, p.y + r * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(140,180,225,0.6)";
+    ctx.beginPath();
+    ctx.moveTo(p.x + r * 0.12, p.y - r);
+    ctx.lineTo(p.x + r * 0.52, p.y - r * 0.35);
+    ctx.lineTo(p.x + r * 0.9, p.y + r * 0.3);
+    ctx.lineTo(p.x + r * 0.12, p.y + r * 0.3);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = "rgba(3,7,17,0.85)";
     ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(p.x - r * 0.9, p.y + r * 0.3);
+    ctx.lineTo(p.x - r * 0.52, p.y - r * 0.55);
+    ctx.lineTo(p.x - r * 0.18, p.y - r * 0.22);
+    ctx.lineTo(p.x + r * 0.12, p.y - r);
+    ctx.lineTo(p.x + r * 0.52, p.y - r * 0.35);
+    ctx.lineTo(p.x + r * 0.9, p.y + r * 0.3);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.strokeStyle = hexA(color, 0.9);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(p.x - r * 1.15, p.y + r * 0.3);
+    ctx.lineTo(p.x + r * 1.15, p.y + r * 0.3);
     ctx.stroke();
 
     if (layers.labels) {
@@ -544,17 +582,35 @@ export function drawChart(
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(th);
-    ctx.fillStyle = "#f2f8ff";
+    // Realistic top-down research vessel: red hull, white deck, bridge, funnel.
+    const L = 24;
+    const W = 9;
     ctx.beginPath();
-    ctx.moveTo(0, -11);
-    ctx.lineTo(7, 8);
-    ctx.lineTo(0, 5);
-    ctx.lineTo(-7, 8);
+    ctx.moveTo(0, -L * 0.55);
+    ctx.quadraticCurveTo(W * 0.62, -L * 0.25, W * 0.5, L * 0.05);
+    ctx.lineTo(W * 0.5, L * 0.38);
+    ctx.quadraticCurveTo(W * 0.5, L * 0.46, W * 0.34, L * 0.46);
+    ctx.lineTo(-W * 0.34, L * 0.46);
+    ctx.quadraticCurveTo(-W * 0.5, L * 0.46, -W * 0.5, L * 0.38);
+    ctx.lineTo(-W * 0.5, L * 0.05);
+    ctx.quadraticCurveTo(-W * 0.62, -L * 0.25, 0, -L * 0.55);
     ctx.closePath();
+    ctx.fillStyle = "#d94f4f";
     ctx.fill();
     ctx.strokeStyle = "rgba(3,7,17,0.9)";
     ctx.lineWidth = 1.4;
     ctx.stroke();
+    ctx.fillStyle = "#f2f8ff";
+    ctx.fillRect(-W * 0.3, -L * 0.2, W * 0.6, L * 0.52);
+    ctx.fillStyle = "#e8eef7";
+    ctx.fillRect(-W * 0.42, L * 0.04, W * 0.84, L * 0.2);
+    ctx.strokeStyle = "rgba(3,7,17,0.7)";
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(-W * 0.42, L * 0.04, W * 0.84, L * 0.2);
+    ctx.fillStyle = "#31435e";
+    ctx.fillRect(-W * 0.24, L * 0.09, W * 0.48, L * 0.07);
+    ctx.fillStyle = "#ffb454";
+    ctx.fillRect(-W * 0.14, L * 0.28, W * 0.28, L * 0.09);
     ctx.restore();
 
     // Pulse ring — the ship is the thing the officer is responsible for.
