@@ -11,7 +11,6 @@ import {
   MountainSnow,
   Layers,
   Link2,
-  MessageSquareWarning,
   PauseCircle,
   Radio,
   Route as RouteIcon,
@@ -40,6 +39,9 @@ const GlobeMap = dynamic(() => import("@/components/iceguard/GlobeMap"), {
 import { cn, fmt, fmtKm, latLon, pct, relAge, utcClock } from "@/lib/utils";
 import { DEFAULT_LAYERS, type ChartBerg, type ChartLayers, type ChartTrack } from "@/lib/chart/polar";
 import { ISEA_LEGS } from "@/lib/geo/expedition";
+import { PLACES, type PlaceInfo } from "@/lib/geo/places";
+import { geodesicKm } from "@/lib/geo/geodesic";
+import { seaIceConcentration } from "@/lib/fields/forcing";
 import type { LatLng } from "@/lib/geo/geodesic";
 
 interface Berg {
@@ -197,6 +199,7 @@ export function ConsoleShell({
   const [corridorOverride, setCorridorOverride] = React.useState<LatLng[] | null>(null);
   const [query, setQuery] = React.useState("");
   const [panel, setPanel] = React.useState<"berg" | "voyage">("voyage");
+  const [place, setPlace] = React.useState<PlaceInfo | null>(null);
   const [toast, setToast] = React.useState<string | null>(null);
   const [now, setNow] = React.useState(() => new Date());
 
@@ -445,14 +448,6 @@ export function ConsoleShell({
             <Activity className="h-3 w-3" />
             {health.model.version}
           </Badge>
-          <a
-            href="mailto:iceguard-support@ncpor.in?subject=ICEGUARD%20feedback"
-            className="flex items-center gap-1.5 rounded-lg border border-frost-400/15 px-2.5 py-1 text-[10px] font-medium text-frost-300 transition-colors hover:text-frost-50"
-          >
-            <MessageSquareWarning size={12} />
-            <span className="hidden md:inline">Report issue / send feedback</span>
-            <span className="md:hidden">Feedback</span>
-          </a>
           <Button size="sm" variant="outline" onClick={() => setLite((v) => !v)}>
             {lite ? "Full mode" : "Lite mode"}
           </Button>
@@ -681,6 +676,7 @@ export function ConsoleShell({
                 onSelectBerg={(id) => {
                   setSelectedBergId(id);
                   setPanel("berg");
+                  setPlace(null);
                   setRightOpen(true);
                 }}
                 detail={bergDetail}
@@ -693,6 +689,13 @@ export function ConsoleShell({
                   setToast("Alternate corridor applied — voyage re-scored.");
                 }}
                 layers={layers}
+                onSelectPlace={(id) => {
+                  const p = PLACES.find((x) => x.id === id);
+                  if (p) {
+                    setPlace(p);
+                    setRightOpen(true);
+                  }
+                }}
               />
             ) : (
             <PolarChart
@@ -713,7 +716,15 @@ export function ConsoleShell({
               onSelectBerg={(id) => {
                 setSelectedBergId(id);
                 setPanel("berg");
+                setPlace(null);
                 setRightOpen(true);
+              }}
+              onSelectPlace={(id) => {
+                const p = PLACES.find((x) => x.id === id);
+                if (p) {
+                  setPlace(p);
+                  setRightOpen(true);
+                }
               }}
             />
             )}
@@ -860,6 +871,19 @@ export function ConsoleShell({
         {/* Right panel */}
         {rightOpen && (
         <aside className="flex w-[22rem] shrink-0 flex-col border-l border-white/25 bg-abyss-900/45">
+          {place ? (
+            <div className="flex shrink-0 items-center justify-between border-b border-frost-400/10 p-2">
+              <span className="px-2 text-xs font-bold text-glacier-300">{place.name}</span>
+              <button
+                type="button"
+                onClick={() => setPlace(null)}
+                className="rounded p-1 text-frost-400 hover:text-frost-100"
+                aria-label="Close place info"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
           <div className="flex shrink-0 gap-1 border-b border-frost-400/10 p-2">
             {(["voyage", "berg"] as const).map((p) => (
               <button
@@ -876,9 +900,12 @@ export function ConsoleShell({
               </button>
             ))}
           </div>
+          )}
 
           <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-3">
-            {panel === "voyage" ? (
+            {place ? (
+              <PlacePanel place={place} bergs={bergs} />
+            ) : panel === "voyage" ? (
               <VoyagePanel voyage={voyage} score={score} hour={hour} />
             ) : (
               <BergPanel detail={bergDetail} berg={berg} />
@@ -906,18 +933,9 @@ export function ConsoleShell({
       )}
 
       {/* Permanent disclaimer — L10 and L15 */}
-      <footer className="flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-0.5 border-t border-frost-400/10 bg-abyss-900 px-4 py-1.5 text-center text-[10px] text-frost-500">
-        <span>
-          Decision support only. ICEGUARD does not replace the master&apos;s or pilot&apos;s
-          judgement or official ice charts, and it issues no helm commands. Overrides are logged.
-        </span>
-        <a
-          href="mailto:iceguard-support@ncpor.in?subject=ICEGUARD%20feedback"
-          className="flex items-center gap-1.5 font-semibold text-frost-300 underline decoration-frost-500/50 underline-offset-2 hover:text-frost-50"
-        >
-          <MessageSquareWarning size={11} />
-          Report issue / send feedback
-        </a>
+      <footer className="shrink-0 border-t border-frost-400/10 bg-abyss-900 px-4 py-1.5 text-center text-[10px] text-frost-500">
+        Decision support only. ICEGUARD does not replace the master&apos;s or pilot&apos;s
+        judgement or official ice charts, and it issues no helm commands. Overrides are logged.
       </footer>
 
       {/* Override dialog — the audit trail is the feature, not an afterthought */}
@@ -1366,5 +1384,50 @@ function Empty({
         <p className="text-xs text-frost-500">{text}</p>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------- place (station / port) */
+
+function PlacePanel({ place, bergs }: { place: PlaceInfo; bergs: Berg[] }) {
+  const t0 = Date.UTC(2026, 0, 18, 6) / 1000;
+  const nearest = React.useMemo(() => {
+    let best: { name: string; d: number } | null = null;
+    for (const b of bergs) {
+      const d = geodesicKm(
+        { lat: place.lat, lon: place.lon },
+        { lat: b.lat, lon: b.lon },
+      );
+      if (!best || d < best.d) best = { name: b.bergId, d };
+    }
+    return best;
+  }, [place, bergs]);
+  const sic = seaIceConcentration(place.lat, place.lon, t0);
+  const fromCapeTown = geodesicKm(
+    { lat: -33.9, lon: 18.4 },
+    { lat: place.lat, lon: place.lon },
+  );
+
+  return (
+    <Card>
+      <CardHeader
+        title={place.kind === "station" ? "Research station" : "Expedition port"}
+        icon={<Anchor size={15} />}
+      />
+      <div className="space-y-1.5 p-3 text-[11px]">
+        <p className="leading-snug text-frost-200">{place.tagline}</p>
+        <Row label="Position" value={latLon(place.lat, place.lon)} mono />
+        {place.facts.map((f) => (
+          <Row key={f.label} label={f.label} value={f.value} />
+        ))}
+        <Row label="Local sea ice" value={pct(sic)} />
+        {nearest && (
+          <Row label="Nearest tracked berg" value={`${nearest.name} · ${fmtKm(nearest.d)}`} mono />
+        )}
+        {place.kind === "station" && (
+          <Row label="Distance from Cape Town" value={fmtKm(fromCapeTown)} mono />
+        )}
+      </div>
+    </Card>
   );
 }

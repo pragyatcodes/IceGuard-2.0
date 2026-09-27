@@ -158,6 +158,7 @@ export function GlobeMap({
   hour,
   onApplyCorridor,
   layers,
+  onSelectPlace,
 }: {
   bergs: GlobeBerg[];
   voyages: GlobeVoyage[];
@@ -170,6 +171,7 @@ export function GlobeMap({
   hour: number;
   onApplyCorridor: (c: LatLng[]) => void;
   layers: ChartLayers;
+  onSelectPlace?: (id: string) => void;
 }) {
   const [alt, setAlt] = React.useState<AltState | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -179,27 +181,38 @@ export function GlobeMap({
   const [liveTex, setLiveTex] = React.useState<CanvasTexture | null>(null);
   const [liveWhen, setLiveWhen] = React.useState<string | null>(null);
   const [liveErr, setLiveErr] = React.useState(false);
+  const [liveRetrying, setLiveRetrying] = React.useState(false);
   React.useEffect(() => {
     let cancelled = false;
-    if (!layers.liveSat) {
-      setLiveTex(null);
-      setLiveErr(false);
-      return;
-    }
-    fetchLiveSatTexture()
-      .then((r) => {
-        if (cancelled) return;
-        setLiveTex(r.texture);
-        setLiveWhen(r.capturedAt);
-        setLiveErr(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setLiveTex(null);
-        setLiveErr(true);
-      });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    setLiveTex(null);
+    setLiveErr(false);
+    setLiveRetrying(false);
+    if (!layers.liveSat) return;
+    const attempt = (n: number) => {
+      fetchLiveSatTexture()
+        .then((r) => {
+          if (cancelled) return;
+          setLiveTex(r.texture);
+          setLiveWhen(r.capturedAt);
+          setLiveErr(false);
+          setLiveRetrying(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          if (n + 1 < 3) {
+            setLiveRetrying(true);
+            timer = setTimeout(() => attempt(n + 1), 45000);
+          } else {
+            setLiveRetrying(false);
+            setLiveErr(true);
+          }
+        });
+    };
+    attempt(0);
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [layers.liveSat]);
 
@@ -222,6 +235,7 @@ export function GlobeMap({
         label: s.label,
         color: "#34e39b",
         size: 16,
+        place: s.label.toLowerCase(),
       })),
       ...(layers.expedition
         ? [
@@ -232,6 +246,7 @@ export function GlobeMap({
               label: "Cape Town · ISEA port",
               color: "#ffd479",
               size: 16,
+              place: "capetown",
             },
           ]
         : []),
@@ -314,6 +329,10 @@ export function GlobeMap({
         markers={markers}
         liveTexture={liveTex}
         onMarkerClick={(m) => {
+          if (m.place) {
+            onSelectPlace?.(m.place);
+            return;
+          }
           const b = bergs.find((x) => m.label?.startsWith(x.bergId));
           if (b) onSelectBerg(b.bergId);
         }}
@@ -362,8 +381,18 @@ export function GlobeMap({
           </div>
         )}
         {layers.liveSat && !liveTex && (
-          <div className="rounded-lg border border-slow-500/40 bg-abyss-950/85 px-2.5 py-1.5 text-[10px] font-bold text-slow-400 backdrop-blur">
-            {liveErr ? "SAT LINK OFFLINE — base map" : "SAT LINK — fetching latest pass…"}
+          <div
+            className={
+              liveErr
+                ? "rounded-lg border border-frost-400/20 bg-abyss-950/85 px-2.5 py-1.5 text-[10px] font-medium text-frost-400 backdrop-blur"
+                : "rounded-lg border border-slow-500/40 bg-abyss-950/85 px-2.5 py-1.5 text-[10px] font-bold text-slow-400 backdrop-blur"
+            }
+          >
+            {liveErr
+              ? "SAT LINK OFFLINE — base map"
+              : liveRetrying
+                ? "SAT LINK — retrying…"
+                : "SAT LINK — fetching latest pass…"}
           </div>
         )}
       </div>

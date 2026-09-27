@@ -579,10 +579,21 @@ export function drawChart(
     const p = project(s, w, h, view);
     const th = (s.headingDeg - view.centreLon) * RAD;
 
+    if (shipSprite && shipSprite.complete && shipSprite.naturalWidth > 0) {
+      const SH = 34;
+      const SW = SH * (shipSprite.naturalWidth / shipSprite.naturalHeight);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(th);
+      ctx.shadowColor = "rgba(3,7,17,0.85)";
+      ctx.shadowBlur = 5;
+      ctx.drawImage(shipSprite, -SW / 2, -SH / 2, SW, SH);
+      ctx.restore();
+    } else {
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(th);
-    // Realistic top-down research vessel: red hull, white deck, bridge, funnel.
+    // Vector fallback vessel: red hull, white deck, bridge, funnel.
     const L = 24;
     const W = 9;
     ctx.beginPath();
@@ -612,6 +623,7 @@ export function drawChart(
     ctx.fillStyle = "#ffb454";
     ctx.fillRect(-W * 0.14, L * 0.28, W * 0.28, L * 0.09);
     ctx.restore();
+    }
 
     // Pulse ring — the ship is the thing the officer is responsible for.
     ctx.strokeStyle = "rgba(242,248,255,0.4)";
@@ -625,6 +637,16 @@ export function drawChart(
   }
 
   return cache;
+}
+
+// Realistic top-down vessel sprite (photographic, alpha-keyed), lazy-loaded.
+let shipSprite: HTMLImageElement | null = null;
+if (typeof window !== "undefined" && !shipSprite) {
+  const img = new Image();
+  img.src = "/ship-top.png";
+  img.onload = () => {
+    shipSprite = img;
+  };
 }
 
 function hexA(hex: string, a: number): string {

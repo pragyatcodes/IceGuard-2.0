@@ -12,6 +12,7 @@ import {
   type ChartTrack,
   type ChartVoyage,
   type ViewState,
+  STATIONS,
 } from "@/lib/chart/polar";
 import { seaIceConcentration } from "@/lib/fields/forcing";
 
@@ -28,6 +29,7 @@ export function PolarChart({
   hour = 0,
   issueAt,
   onSelectBerg,
+  onSelectPlace,
   className,
 }: {
   bergs: ChartBerg[];
@@ -38,6 +40,7 @@ export function PolarChart({
   hour?: number;
   issueAt: number; // epoch seconds, so the raster matches the forecast
   onSelectBerg?: (bergId: string) => void;
+  onSelectPlace?: (id: string) => void;
   className?: string;
 }) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -101,9 +104,20 @@ export function PolarChart({
         const d = Math.hypot(p.x - x, p.y - y);
         if (d < 18 && (!best || d < best.d)) best = { id: b.bergId, d };
       }
-      if (best) onSelectBerg?.(best.id);
+      if (best) {
+        onSelectBerg?.(best.id);
+        return;
+      }
+      for (const s of STATIONS) {
+        const p = project(s, size.w, size.h, view);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < 14) {
+          onSelectPlace?.(s.name.toLowerCase());
+          return;
+        }
+      }
     },
-    [bergs, size, view, onSelectBerg],
+    [bergs, size, view, onSelectBerg, onSelectPlace],
   );
 
   return (

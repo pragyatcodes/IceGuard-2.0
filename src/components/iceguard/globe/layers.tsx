@@ -49,7 +49,8 @@ export function shipTopIcon(): string {
 let shipTex: THREE.Texture | null = null;
 export function shipTopTexture(): THREE.Texture {
   if (!shipTex) {
-    shipTex = new THREE.TextureLoader().load(shipTopIcon());
+    // Photographic top-down vessel, alpha-keyed (see public/ship-top.png).
+    shipTex = new THREE.TextureLoader().load("/ship-top.png");
     shipTex.colorSpace = THREE.SRGBColorSpace;
     shipTex.anisotropy = 4;
   }
@@ -286,7 +287,7 @@ export function ShipActor({
   return (
     <group>
       <mesh position={pV} quaternion={quat}>
-        <planeGeometry args={[0.075, 0.15]} />
+        <planeGeometry args={[0.068, 0.15]} />
         <meshBasicMaterial
           map={shipTopTexture()}
           transparent

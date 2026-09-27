@@ -17,6 +17,8 @@ export interface GlobeMarker {
   size?: number;
   /** Pin cone / stem tint (ICEGUARD extension). */
   color?: string;
+  /** ICEGUARD: clickable place (station / port) id for the info panel. */
+  place?: string;
 }
 
 export interface Globe3DConfig {
